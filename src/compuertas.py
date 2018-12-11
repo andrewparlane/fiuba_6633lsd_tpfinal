@@ -1,0 +1,250 @@
+import os
+
+import matplotlib.pyplot as plt
+
+
+import PySpice.Logging.Logging as Logging
+logger = Logging.setup_logging()
+
+
+from PySpice.Doc.ExampleTools import find_libraries
+from PySpice.Probe.Plot import plot
+from PySpice.Spice.Library import SpiceLibrary
+from PySpice.Spice.Netlist import Circuit, SubCircuit, SubCircuitFactory
+from PySpice.Unit import *
+
+import numpy as np
+
+# ======================
+# Constantes del proceso
+# ONC5 500nm
+# ======================
+L_MIN = 0.6e-6      # Largo de canal mínimo = 0.6 um
+W_MIN = 1.1e-6      # Ancho del transistor mínimo = 1.1 um
+LD_MIN = 1.2e-6     # Largo de difusión mínimo = 1.2 um
+
+
+""" Compuerta:
+        base para definir una subcircuito para una compuerta
+        El subcircuito tiene 3 parámetros por defecto:
+            W - el ancho básico del transistor
+            L - El largo de canal
+            LD - El largo de difusión
+        Sugiero que solo usas W
+        Puedes pasar otros parámetros al __init__ desde el clase padre
+"""
+
+class Compuerta(SubCircuitFactory):
+    __name__ = None
+    __nodes__ = None
+
+    def __init__(self, **kwargs):
+        super().__init__(W=W_MIN, L=L_MIN, LD=LD_MIN, **kwargs)
+
+    """ create_transistor:
+            Todos los llamadas de create_transistor deben ser antes
+            de que el subcircuito es añadido al circuito con una llamada a
+            circuit.subcircuit(...)
+
+            argumentos:
+                model       - debe ser "CMOSN" o "CMOSP"
+                name        - nombre del subcircuito e.g. "Inversor"
+                drainNode   - nombre del nodo en el subcircuito que es conectado
+                              al drain del transistor
+                gateNode    - nombre del nodo en el subcircuito que es conectado
+                              al gate del transistor
+                sourceNode  - nombre del nodo en el subcircuito que es conectado
+                              al source del transistor
+                bulkNode    - nombre del nodo en el subcircuito que es conectado
+                              al bulkNode del transistor
+                wMult       - El subcircuito tiene un parámetro de W (ancho básico
+                              del transistor) pero los transistores P están dos
+                              veces más grande de los Ns, así puedes pasar 2 aquí.
+                              También en una compuerta NAND los dos transistores N
+                              están en seri, así los dos quieren estar dos veces
+                              más grande.
+
+    """
+    def create_transistor(self, model, name, drainNode, gateNode, sourceNode, bulkNode, wMult):
+
+        # wMult es un argumento a esta función que pasas cuándo diseñas
+        # el subcircuito.
+
+        # W es un parámetro del subcircuito que pasas cuando instancias
+        # el subcircuito.
+
+        # El ancho de este transistor es W * wMult
+        w = "{W * " + str(wMult) + "}"
+
+        # la aread de difusión es el ancho del transistor por
+        # el largo de difusión: (W * wMult) * LD
+        area = "{W * " + str(wMult) + " * LD}"
+
+        # El perimetro de difusión solo debería estar los tres lados que no
+        # están abajos de la compuerta. Así es es el ancho del transistor y
+        # dos veces el largo de difusión: (W * wMult) + (2 * LD)
+        perim = "{(W * " + str(wMult) + ") + (2 * LD)}"
+
+        self.M(name,
+               drainNode,
+               gateNode,
+               sourceNode,
+               bulkNode,
+               model=model,
+               width=w,
+               length="{L}",
+               drain_area=area,
+               source_area=area,
+               drain_perimeter=perim,
+               source_perimeter=perim)
+
+    """ create_transistorN:
+            ver el comentario de create_transistor por los argumentos
+    """
+    def create_transistorN(self, name, drainNode, gateNode, sourceNode, bulkNode, wMult):
+        self.create_transistor("CMOSN", name, drainNode, gateNode, sourceNode, bulkNode, wMult)
+
+    """ create_transistorP:
+            ver el comentario de create_transistor por los argumentos
+    """
+    def create_transistorP(self, name, drainNode, gateNode, sourceNode, bulkNode, wMult):
+        self.create_transistor("CMOSP", name, drainNode, gateNode, sourceNode, bulkNode, wMult)
+
+# =============================================================================
+# Inversor
+# =============================================================================
+# Ver inversor.asc
+# Nota que el transistor P es dos veces el ancho del transistor N
+# =============================================================================
+
+class Inversor(Compuerta):
+    __name__ = 'inversor'
+    __nodes__ = ('Vdd', 'In', 'Out')
+
+    def __init__(self):
+        super().__init__()
+        self.create_transistorN(1, 'Out', 'In', self.gnd, self.gnd, 1)
+        self.create_transistorP(2, 'Out', 'In', 'Vdd', 'Vdd', 2)
+
+    """ add_instance:
+            añadir una inversor al circuito
+            Es necesario añadir el subcircuito al netlist también
+            con una llamada: circuit.subcircuit(Inversor())
+
+            ejemplo:
+                circuit = Circuit('Transistor')
+                circuit.include("V35G-spice.lib")
+                inv = Inversor()
+                circuit.subcircuit(inv)
+                circuit.V('dd', 'Vdd', circuit.gnd, 5)
+                circuit.PulseVoltageSource("In", "In", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=1e-9, period=2e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
+                inv.add_instance(circuit, 1, 'Vdd', 'In', 'Out', 2.4e-6)
+
+            argumentos:
+                circuit     - El circuito / subcircuito donde quieres
+                              añadir la compuerta
+                name        - nombre / número de la compuerta
+                vddNode     - el nodo de Vdd
+                inNode      - la entrada de la compuerta
+                outNode     - la salida de la compuerta
+                w           - El ancho del transistor N. El ancho del
+                              transistor P es dos veces más grande
+    """
+    def add_instance(self, circuit, name, vddNode, inNode, outNode, w):
+        circuit.X("Inv" + str(name), "Inversor", vddNode, inNode, outNode, w=w)
+
+
+# =============================================================================
+# NAND
+# =============================================================================
+# Ver nand.asc
+# Nota que todos los transistores son w * 2
+# =============================================================================
+
+class Nand(Compuerta):
+    __name__ = 'nand'
+    __nodes__ = ('Vdd', 'InA', 'InB', 'Out')
+
+    def __init__(self):
+        super().__init__()
+        self.create_transistorN(1, 'Out', 'InA', 'tmpN', self.gnd, 2)
+        self.create_transistorN(2, 'tmpN', 'InB', self.gnd, self.gnd, 2)
+        self.create_transistorP(3, 'Out', 'InA', 'Vdd', 'Vdd', 2)
+        self.create_transistorP(4, 'Out', 'InB', 'Vdd', 'Vdd', 2)
+
+    """ add_instance:
+            añadir una NAND al circuito
+            Es necesario añadir el subcircuito al netlist también
+            con una llamada: circuit.subcircuit(NAND())
+
+            ejemplo:
+                circuit = Circuit('Transistor')
+                circuit.include("V35G-spice.lib")
+                nand = NAND()
+                circuit.subcircuit(nand)
+                circuit.V('dd', 'Vdd', circuit.gnd, 5)
+                circuit.PulseVoltageSource("InA", "InA", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=1e-9, period=2e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
+                circuit.PulseVoltageSource("InB", "InB", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=2e-9, period=4e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
+                nand.add_instance(circuit, 1, 'Vdd', 'InA', 'InB', 'Out', 2.4e-6)
+
+            argumentos:
+                circuit     - El circuito / subcircuito donde quieres
+                              añadir la compuerta
+                name        - nombre / número de la compuerta
+                vddNode     - el nodo de Vdd
+                inANode     - la entrada A de la compuerta
+                inBNode     - la entrada B de la compuerta
+                outNode     - la salida de la compuerta
+                w           - El ancho básico. Todos los transistores
+                              tienen un ancho W * 2
+    """
+    def add_instance(self, circuit, name, vddNode, inANode, inBNode, outNode, w):
+        circuit.X("Nand" + str(name), "nand", vddNode, inANode, inBNode, outNode, w=w)
+
+
+# =============================================================================
+# NOR
+# =============================================================================
+# Ver nor.asc
+# Nota que los transistores P son W * 4, y los transistores N son W
+# =============================================================================
+
+class Nor(Compuerta):
+    __name__ = 'nor'
+    __nodes__ = ('Vdd', 'InA', 'InB', 'Out')
+
+    def __init__(self):
+        super().__init__()
+        self.create_transistorN(1, 'Out', 'InA', self.gnd, self.gnd, 1)
+        self.create_transistorN(2, 'Out', 'InB', self.gnd, self.gnd, 1)
+        self.create_transistorP(3, 'Out', 'InA', 'tmpP', 'Vdd', 4)
+        self.create_transistorP(4, 'tmpP', 'InB', 'Vdd', 'Vdd', 4)
+
+    """ add_instance:
+            añadir un NOR al circuito
+            Es necesario añadir el subcircuito al netlist también
+            con una llamada: circuit.subcircuit(NOR())
+
+            ejemplo:
+                circuit = Circuit('Transistor')
+                circuit.include("V35G-spice.lib")
+                nor = NOR()
+                circuit.subcircuit(nor)
+                circuit.V('dd', 'Vdd', circuit.gnd, 5)
+                circuit.PulseVoltageSource("InA", "InA", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=1e-9, period=2e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
+                circuit.PulseVoltageSource("InB", "InB", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=2e-9, period=4e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
+                nor.add_instance(circuit, 1, 'Vdd', 'InA', 'InB', 'Out', 2.4e-6)
+
+            argumentos:
+                circuit     - El circuito / subcircuito donde quieres
+                              añadir la compuerta
+                name        - nombre / número de la compuerta
+                vddNode     - el nodo de Vdd
+                inANode     - la entrada A de la compuerta
+                inBNode     - la entrada B de la compuerta
+                outNode     - la salida de la compuerta
+                w           - El ancho de los transistores N.
+                              Los transistores P tienen ancho = w * 4.
+    """
+    def add_instance(self, circuit, name, vddNode, inANode, inBNode, outNode, w):
+        circuit.X("Nor" + str(name), "nor", vddNode, inANode, inBNode, outNode, w=w)
