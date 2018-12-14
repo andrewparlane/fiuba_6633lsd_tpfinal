@@ -44,20 +44,21 @@ inv = compuertas.Inversor()
 # ==================
 # Generar el netlist
 # ==================
-circuit = Circuit('Cadena de Inversores')   # titulo
-circuit.include(spice_library['CMOSN'])     # .include "V35G-spice.lib"
-circuit.subcircuit(inv)                     # .subckt inversor .... .ends inversor
-circuit.V('dd', 'Vdd', circuit.gnd, 5)      # Fuente de tensión Vdd 5V
+circuit = Circuit('Cadena de Inversores')       # titulo
+circuit.include(spice_library['CMOSN'])         # .include "V35G-spice.lib"
+circuit.subcircuit(inv)                         # .subckt inversor .... .ends inversor
+vdd = circuit.V('dd', 'Vdd', circuit.gnd, 5)    # Fuente de tensión Vdd 5V
 
 # Fuente de tensión de pulses que usamos
 # como la entrada de la cadena
-circuit.PulseVoltageSource("In", "In", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=1e-9, period=2e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
+vin = circuit.PulseVoltageSource("In", "In", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=1e-9, period=2e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
 
 # Los inversores
+inversores = [];
 for i in range(num):
     inNode = 'In' if i == 0 else ('tmp' + str(i))
     outNode = 'Out' if i == (num - 1) else ('tmp' + str(i+1))
-    inv.add_instance(circuit, i, 'Vdd', inNode, outNode, compuertas.W_MIN)
+    inversores.append(inv.add_instance(circuit, i, 'Vdd', inNode, outNode, compuertas.W_MIN))
 
 # muestra el netlist
 print(str(circuit))
@@ -117,6 +118,52 @@ if (out_transitions == 0):
 else:
     tp = out_transitions - in_rises
     print("Tp = " + str(tp.convert_to_power(-12)))
+
+# =================
+# Muestra las ondas
+# =================
+figure = plt.figure(1, (10, 5))
+axe = plt.subplot(111)
+plt.title('')
+plt.xlabel('Time [s]')
+plt.ylabel('Voltage [V]')
+plt.grid()
+plot(analysis['in'], axis=axe)
+
+ledgend = ['In']
+
+for i in range(num - 1):
+    node = "tmp" + str(i+1)
+    plot(analysis[node], axis=axe)
+    ledgend.append(node)
+
+ledgend.append('Out')
+
+plot(analysis.out, axis=axe)
+plt.legend(ledgend, loc=(.05,.1))
+
+plt.tight_layout()
+plt.show()
+
+# ===========================================
+# Actualiza el netlist, repetir la simulation
+# y muestra las ondas de nuevo
+# ===========================================
+
+# hacemos el último inversor mucho más grande
+inversores[num-1].parameters["w"] = 20e-6
+
+# Cambiamos Vdd a 3.3V
+vdd.dc_value = 3.3
+
+# Tenemos que cambiar el tren de pulsos también
+vin.pulsed_value = 3.3
+
+# ====================
+# Transient Simulación
+# ====================
+simulator = circuit.simulator(temperature=27, nominal_temperature=27)
+analysis = simulator.transient(step_time=10e-15, end_time=1.5e-9)
 
 # =================
 # Muestra las ondas
