@@ -151,7 +151,7 @@ class Inversor(Compuerta):
                               transistor P es dos veces más grande
     """
     def add_instance(self, circuit, name, vddNode, inNode, outNode, w):
-        circuit.X("Inv" + str(name), "Inversor", vddNode, inNode, outNode, w=w)
+        return circuit.X("Inv" + str(name), "Inversor", vddNode, inNode, outNode, w=w)
 
 
 # =============================================================================
@@ -199,7 +199,7 @@ class Nand(Compuerta):
                               tienen un ancho W * 2
     """
     def add_instance(self, circuit, name, vddNode, inANode, inBNode, outNode, w):
-        circuit.X("Nand" + str(name), "nand", vddNode, inANode, inBNode, outNode, w=w)
+        return circuit.X("Nand" + str(name), "nand", vddNode, inANode, inBNode, outNode, w=w)
 
 
 # =============================================================================
@@ -247,4 +247,4 @@ class Nor(Compuerta):
                               Los transistores P tienen ancho = w * 4.
     """
     def add_instance(self, circuit, name, vddNode, inANode, inBNode, outNode, w):
-        circuit.X("Nor" + str(name), "nor", vddNode, inANode, inBNode, outNode, w=w)
+        return circuit.X("Nor" + str(name), "nor", vddNode, inANode, inBNode, outNode, w=w)
