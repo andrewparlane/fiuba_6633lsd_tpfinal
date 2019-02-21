@@ -17,11 +17,11 @@ import numpy as np
 
 # ======================
 # Constantes del proceso
-# ONC5 500nm
+# TSMC 180 - CL018G
 # ======================
-L_MIN = 0.6e-6      # Largo de canal mínimo = 0.6 um
-W_MIN = 1.1e-6      # Ancho del transistor mínimo = 1.1 um
-LD_MIN = 1.2e-6     # Largo de difusión mínimo = 1.2 um
+L_MIN = 0.18e-6     # Largo de canal mínimo = 0.18 um
+W_MIN = 0.42e-6     # Ancho del transistor mínimo = 0.42 um
+LD_MIN = 0.48e-6    # Largo de difusión mínimo = 0.48 um
 
 
 """ Compuerta:
