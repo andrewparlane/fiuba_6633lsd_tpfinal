@@ -2,10 +2,8 @@ import os
 
 import matplotlib.pyplot as plt
 
-
 import PySpice.Logging.Logging as Logging
 logger = Logging.setup_logging()
-
 
 from PySpice.Doc.ExampleTools import find_libraries
 from PySpice.Probe.Plot import plot
@@ -15,28 +13,27 @@ from PySpice.Unit import *
 
 import numpy as np
 
-import compuertas
+import TSMC180 as tech  # Tecnologia que queremos usar
 
 libraries_path = find_libraries()
-spice_library = SpiceLibrary(libraries_path)
 
 # Compuertas
-nand = compuertas.Nand()
+nand = tech.Nand()
 
 # Netlist
 circuit = Circuit('nand_test')
-circuit.include(spice_library['CMOSN'])
+circuit.include(libraries_path + "/" + tech.LIB_NAME)   #.inclcude "foo.lib"
 circuit.subcircuit(nand)
-circuit.V('dd', 'Vdd', circuit.gnd, 5)
-inA = circuit.V("A", "A", circuit.gnd, 5)
-inB = circuit.V("B", "B", circuit.gnd, 5)
-nand.add_instance(circuit, 1, 'Vdd', "A", "B", "Out", compuertas.W_MIN)
+circuit.V('dd', 'Vdd', circuit.gnd, tech.VDD)
+inA = circuit.V("A", "A", circuit.gnd, tech.VDD)
+inB = circuit.V("B", "B", circuit.gnd, tech.VDD)
+nand.add_instance(circuit, 1, 'Vdd', "A", "B", "Out", tech.W_MIN)
 
 errores = 0
 for entradaA in range(2):
-    inA.dc_value = 0 if entradaA == 0 else 5
+    inA.dc_value = 0 if entradaA == 0 else tech.VDD
     for entradaB in range(2):
-        inB.dc_value = 0 if entradaB == 0 else 5
+        inB.dc_value = 0 if entradaB == 0 else tech.VDD
 
         esperado = 0 if (entradaA == 1 and entradaB == 1) else 1
 
@@ -47,7 +44,7 @@ for entradaA in range(2):
         salida = float(analysis.out)
         print("A: " + str(inA.dc_value) + " V, B: " + str(inB.dc_value) + " V, Salida " + str(salida) + " V")
 
-        if (salida > 4.9):
+        if (salida > tech.VDD - 0.1):
             logica = 1
         elif (salida < 0.1):
             logica = 0

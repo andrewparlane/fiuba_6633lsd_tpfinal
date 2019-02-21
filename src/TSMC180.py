@@ -1,28 +1,19 @@
-import os
+#import os
 
-import matplotlib.pyplot as plt
-
-
-import PySpice.Logging.Logging as Logging
-logger = Logging.setup_logging()
-
-
-from PySpice.Doc.ExampleTools import find_libraries
-from PySpice.Probe.Plot import plot
-from PySpice.Spice.Library import SpiceLibrary
 from PySpice.Spice.Netlist import Circuit, SubCircuit, SubCircuitFactory
 from PySpice.Unit import *
 
-import numpy as np
+#import numpy as np
 
 # ======================
 # Constantes del proceso
 # TSMC 180 - CL018G
 # ======================
-L_MIN = 0.18e-6     # Largo de canal mínimo = 0.18 um
-W_MIN = 0.42e-6     # Ancho del transistor mínimo = 0.42 um
-LD_MIN = 0.48e-6    # Largo de difusión mínimo = 0.48 um
-
+LIB_NAME    = "TSMC180.lib"
+VDD         = 1.8           # Tensión de Vdd = 1.8V
+L_MIN       = 0.18e-6       # Largo de canal mínimo = 0.18 um
+W_MIN       = 0.42e-6       # Ancho del transistor mínimo = 0.42 um
+LD_MIN      = 0.48e-6       # Largo de difusión mínimo = 0.48 um
 
 """ Compuerta:
         base para definir una subcircuito para una compuerta

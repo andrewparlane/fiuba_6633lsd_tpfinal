@@ -13,8 +13,7 @@ from PySpice.Unit import *
 
 import numpy as np
 
-# Nuestros classes en compuertas.py
-import compuertas
+import TSMC180 as tech  # Tecnologia que queremos usar
 
 # ====================
 # Parseo de argumentos
@@ -32,33 +31,32 @@ if (num == 0):
 # Encontrar la carpeta de liberias
 # ================================
 libraries_path = find_libraries()
-spice_library = SpiceLibrary(libraries_path)
 
 # ========================
 # Instancia los compuertas
 # ========================
-inv = compuertas.Inversor()
-#nand = compuertas.Nand()
-#nor = compuertas.Nor()
+inv = tech.Inversor()
+#nand = tech.Nand()
+#nor = tech.Nor()
 
 # ==================
 # Generar el netlist
 # ==================
-circuit = Circuit('Cadena de Inversores')       # titulo
-circuit.include(spice_library['CMOSN'])         # .include "V35G-spice.lib"
-circuit.subcircuit(inv)                         # .subckt inversor .... .ends inversor
-vdd = circuit.V('dd', 'Vdd', circuit.gnd, 5)    # Fuente de tensión Vdd 5V
+circuit = Circuit('Cadena de Inversores')               # titulo
+circuit.include(libraries_path + "/" + tech.LIB_NAME)   #.inclcude "foo.lib"
+circuit.subcircuit(inv)                                 # .subckt inversor .... .ends inversor
+vdd = circuit.V('dd', 'Vdd', circuit.gnd, tech.VDD)     # Fuente de tensión Vdd
 
 # Fuente de tensión de pulses que usamos
 # como la entrada de la cadena
-vin = circuit.PulseVoltageSource("In", "In", circuit.gnd, initial_value=0, pulsed_value=5, pulse_width=1e-9, period=2e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
+vin = circuit.PulseVoltageSource("In", "In", circuit.gnd, initial_value=0, pulsed_value=tech.VDD, pulse_width=1e-9, period=2e-9, delay_time=10e-12, rise_time=20e-12, fall_time=20e-12)
 
 # Los inversores
 inversores = [];
 for i in range(num):
     inNode = 'In' if i == 0 else ('tmp' + str(i))
     outNode = 'Out' if i == (num - 1) else ('tmp' + str(i+1))
-    inversores.append(inv.add_instance(circuit, i, 'Vdd', inNode, outNode, compuertas.W_MIN))
+    inversores.append(inv.add_instance(circuit, i, 'Vdd', inNode, outNode, tech.W_MIN))
 
 # muestra el netlist
 print(str(circuit))
@@ -91,7 +89,7 @@ out_transitions = 0
 # podríamos iterar por los dos arrays al mismo tiempo
 # v es la tensión del nodo in y t es el tiempo de la muestra
 for (v,t) in zip(analysis['in'], analysis['in'].abscissa):
-    if (float(v) >= 2.5):
+    if (float(v) >= (tech.VDD / 2)):
         in_rises = t
         print("In rises past 50% at " + str(in_rises.convert_to_power(-12)))
         break
@@ -102,13 +100,13 @@ for (v, t) in zip(analysis['out'], analysis['out'].abscissa):
     # de la entrada
     if (num % 2):
         # par
-        if (float(v) <= 2.5):
+        if (float(v) <= (tech.VDD / 2)):
             out_transitions = t
             print("Out falls past 50% at " + str(out_transitions.convert_to_power(-12)))
             break
     else:
         # impar
-        if (float(v) >= 2.5):
+        if (float(v) >= (tech.VDD / 2)):
             out_transitions = t
             print("Out rises past 50% at " + str(out_transitions.convert_to_power(-12)))
             break
