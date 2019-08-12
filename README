@@ -1,15 +1,12 @@
 Para installar PySpice en Windows 10 home 64 bit.
-    No puedes instalar usando pip, so se funciona.
-    descargar ngspice-28_dll_64.zip desde https://sourceforge.net/projects/ngspice/files/
-    copia Spice64_dll/dll-vs/ngspice.dll a C:\Program Files\Spice64\bin-dll
-    También ngspice.zip es en este repositorio a ngspice_dll/
-    Checkout el fuente de PySpice: https://github.com/FabriceSalvaire/PySpice.git
-        Estoy usando 83ea576e97286b2f0d3b5f13ff266c75b8b91a20 de 10 Junio 2018
-    Instala Anaconda https://www.anaconda.com/distribution/
-        No puedo hacerle funcionar con cygwin
-    start -> anaconda prompt -> cd al checkout de PySpice
-    python setup.py build
-    python setup.py install
+    seguir las instrucciones aquí
+    https://pyspice.fabrice-salvaire.fr/installation.html#installation-page
+    No puedo hacerle funcionar con cygwin, así estoy usando Anaconda
+        No sé como usar el gui, solo estoy usando anaconda prompt
+    Para probar que funciona:
+        start -> Anaconda Prompt
+        cd ......\fiuba_6633lsd_tpfinal\src
+        python inversor_test.py
 
 Para installar PySpice en Linux / MAC
     No tengo ni idea.
