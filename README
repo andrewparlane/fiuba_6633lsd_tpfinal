@@ -12,3 +12,11 @@ Para installar PySpice en Linux / MAC
     No tengo ni idea.
     comiensas con https://pyspice.fabrice-salvaire.fr/installation.html
     actualisas aquí cuando funciona.
+
+Para ejecutar:
+    python foobar.py
+    Hay un warning que viene de ngspice: "warning: vin: no DC value, ..."
+        No sé como arreglar le y se satura la salida
+        sugiero que usan:
+        windows: python foobar.py | findstr /v "warning: vin: no DC value, ..."
+        linux: python foobar.py | findstr -v "warning: vin: no DC value, ..."
