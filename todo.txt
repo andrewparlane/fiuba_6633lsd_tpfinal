@@ -14,7 +14,21 @@ How to do paths
         or monte carlo sim
             instantiates the path and then runs the simulation lots
 Build logical effort model for this tech
+    See logical effort notes
 Design some paths
+    which paths?
+        Single component paths
+            can only compare simulated delay with calculated delay
+            Cout = 0 -> h = 0 -> d = p
+        One gate driving the same sized gate
+            can only compare simulated delay with calculated delay
+            This and the previous help check our p and g values for each gate, and our tau
+        inversor chains of various lengths and various loads?
+        Fan out of 4 FO4 - see example 1.2
+            is FO4 delay known for our process?
+        clock tree?
+        ripple carry adder?
+        ...?
     Calculate logical effort for paths
     Run monte carlo simulation for paths
 Informe
@@ -33,5 +47,13 @@ Questions
         How to compare to theoretical result?
             width B - width A?
             width B / width A?
+            compare f = gh per stage to f_opt?
+            Look at calculated Tp vs simulated?
     Do we just support fixed logic paths, or do we want to try and test other stuff
         buffer insertion?
+        Estimated delays vs actual?
+    What is the range of widths we need to look at?
+        IIRC Capacitance and resistance are not entirely linear based on width
+        so we have to pick a range to work in that is roughly linear
+    Anything else to do?
+        Compare to other methodologies? (see chapter 12.4)
