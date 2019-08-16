@@ -1,0 +1,29 @@
+Tau             delay unit (~50ps in a typical 0.6um process), can we get more exact?
+                Can calculate using a ring oscilator
+                Need Pinv, chapter 5 shows how to get both Tau and Pinv
+g               logical effort - depends only on the topology of the gate, not size of transistors
+                How much worse at driving current a gate is compared to an inverter
+                Or how much more input capacitance a gate needs to deliver the same current as an inverter
+                Can we use Table 1.1? Or is it different because WPFACT is 1.5?
+                apparently not, see note under Table 1.1
+h = Cout / Cin  electrical effort, Cout is based on load, Cin is based on transistor sizes for one input
+  = Wout / Win  can also be the ration of gate widths, if all transistors have the same gate length
+                stray capacitances can be converted into equivalent widths
+f = gh          effort delay / stage effort
+p               parasitic delay - internal capacitance of gate (largely independant of transistor width)
+                capacitance of source / drain of driving transisters
+d = f + p       total delay (in units of Tau)
+
+Paths:
+    G = big mult of all g
+    H = Cout / Cin                              Where Cin and Cout are the input / output capacitances of the path
+    b = (Con_path + Coff_path) / Con_path       branching effort b at the output of a logic gate in a path
+    B = big mult of all b
+    F = GBH                                     path effort
+    BH = big mult of all h
+    Df = big sum of all (gh)                    Path effort delay
+    P = big sum of all p                        Path parasitic delay
+    D = big sum of all d                        Path delay
+      = Df + P
+    f_opt = F^(1/N)                             min delay is acheived by having gh = f_opt for each stage
+    D_opt = N F_opt + P                         min delay possible
