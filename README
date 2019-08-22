@@ -14,9 +14,16 @@ Para installar PySpice en Linux / MAC
     actualisas aquí cuando funciona.
 
 Para ejecutar:
-    python foobar.py
+    tsmc180_main.py es el script top level, te permite ejecutar cualquiere de los tests
+        y tiene un help [-h, --help] bastante completo
+
     Hay un warning que viene de ngspice: "warning: vin: no DC value, ..."
         No sé como arreglar le y se satura la salida
         sugiero que usan:
         windows: python foobar.py | findstr /v "warning: vin: no DC value, ..."
         linux: python foobar.py | findstr -v "warning: vin: no DC value, ..."
+
+    Escribí tsmc180_main.bat para windows que hace eso automaticamente
+        tsmc180_main.bat -h para ver los opciones
+
+    Debería estar facíl escribir un bash script para linux que hace igual
