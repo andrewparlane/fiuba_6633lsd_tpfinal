@@ -16,12 +16,13 @@ from PySpice.Unit import *
 
 import numpy as np
 
-# tech      - La tecnologia usar
-# put       - Path Under Test (Ruta bajo prueba)
-# step_time - El escalon máximo para usar en la simulación
-# num_sims  - El número de simulaciones
-#               Falta de memoria después de ~50,000 simulaciones
-#               Normalmente encontramos el mejor antes de 5,000 simulaciones
+# tech          - La tecnologia usar
+# put           - Path Under Test (Ruta bajo prueba)
+# step_time     - El escalon máximo para usar en la simulación
+# num_sims      - El número de simulaciones
+#                   Falta de memoria después de ~50,000 simulaciones
+#                   Normalmente encontramos el mejor antes de 5,000 simulaciones
+# plot_result   - Muestra una grafica de la simulación mejor al final
 
 # Ejemplo:
 #   from tech   import TSMC180              as tech     # Tecnologia que queremos usar
@@ -29,9 +30,9 @@ import numpy as np
 #   from sims   import monte_carlo_sim      as mcs      # El código que hace la simulación Monte Carlo
 #
 #   put = path.InversorChainPath(tech, 5)
-#   mcs.do_monte_carlo_sim(tech, put, 1e-9, 10000)
+#   mcs.do_monte_carlo_sim(tech, put, 1e-9, 10000, True)
 
-def do_monte_carlo_sim(tech, put, step_time, num_sims):
+def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # ================================
     # Encontrar la carpeta de liberias
     # ================================
@@ -162,7 +163,6 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims):
     # ======================
     # Mostrar los resultados
     # ======================
-
     te = time.time();
     print("Took " + str(te - ts) + "s to run " + str(num_sims) + " simulations");
     print("Best Tp " + str(best_tp) + " Widths " + str(best_widths))
@@ -170,7 +170,6 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims):
     # ====================================
     # Escribir los resultados a un archivo
     # ====================================
-
     if not os.path.exists("results/"):
         os.mkdir("results/")
     f = open("results/"+type(put).__name__+"_"+tech.NAME+".txt","a+")
@@ -181,7 +180,8 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims):
     # Finalmente simula una vez más con anchos mejores
     # Y plotear el resultado
     # ================================================
-    put.set_widths(best_widths)
-    simulator = circuit.simulator(temperature=27, nominal_temperature=27)
-    analysis = simulator.transient(end_time=sim_time*1.5, step_time=step_time)
-    put.plot(analysis, 'In', 'Out')
+    if (plot_result):
+        put.set_widths(best_widths)
+        simulator = circuit.simulator(temperature=27, nominal_temperature=27)
+        analysis = simulator.transient(end_time=sim_time*1.5, step_time=step_time)
+        put.plot(analysis, 'In', 'Out')
