@@ -1,9 +1,9 @@
 import os
 import sys
 
-import TSMC180 as tech          # Tecnologia que queremos usar
-import inv_chain_path as path   # Path que estamos probando
-import monte_carlo_sim as mcs   # El código que hace la simulación Monte Carlo
+from tech   import TSMC180              as tech     # Tecnologia que queremos usar
+from paths  import inversor_chain_path  as path     # Path que estamos probando
+from sims   import monte_carlo_sim      as mcs      # El código que hace la simulación Monte Carlo
 
 # ====================
 # Parseo de argumentos
