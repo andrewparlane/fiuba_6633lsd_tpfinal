@@ -171,8 +171,10 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims):
     # Escribir los resultados a un archivo
     # ====================================
 
-    f = open("cadena_inversores_5_resultados.txt","a+")
-    f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Best Tp " + str(best_tp) + " Widths " + str(best_widths) + "\n")
+    if not os.path.exists("results/"):
+        os.mkdir("results/")
+    f = open("results/"+type(put).__name__+"_"+tech.NAME+".txt","a+")
+    f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(best_tp) + " Widths " + str(best_widths) + "\n")
     f.close()
 
     # ================================================

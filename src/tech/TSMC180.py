@@ -9,6 +9,7 @@ from PySpice.Unit import *
 # Constantes del proceso
 # TSMC 180 - CL018G
 # ======================
+NAME        = "TSMC180"
 LIB_NAME    = "TSMC180.lib"
 VDD         = 1.8           # Tensión de Vdd = 1.8V
 L_MIN       = 0.18e-6       # Largo de canal mínimo = 0.18 um
