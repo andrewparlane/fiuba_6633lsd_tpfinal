@@ -15,6 +15,11 @@ L_MIN       = 0.18e-6       # Largo de canal mínimo = 0.18 um
 W_MIN       = 0.42e-6       # Ancho del transistor mínimo = 0.42 um
 LD_MIN      = 0.48e-6       # Largo de difusión mínimo = 0.48 um
 
+# El tiempo de propagación promedio de un inversor con carga de otro inversor igual
+# es óptimo cuando el transistor P es 1.5 veces más grande que el transistor N.
+# Ver LTSpice_tests/wpfact.asc y "plot .step'ed .meas data"
+WPFACT      = 1.5
+
 """ Compuerta:
         base para definir una subcircuito para una compuerta
         El subcircuito tiene 3 parámetros por defecto:
@@ -115,7 +120,7 @@ class Inversor(Compuerta):
     def __init__(self):
         super().__init__()
         self.create_transistorN(1, 'Out', 'In', self.gnd, self.gnd, 1)
-        self.create_transistorP(2, 'Out', 'In', 'Vdd', 'Vdd', 2)
+        self.create_transistorP(2, 'Out', 'In', 'Vdd', 'Vdd', WPFACT)
 
     """ add_instance:
             añadir una inversor al circuito
@@ -160,8 +165,8 @@ class Nand(Compuerta):
         super().__init__()
         self.create_transistorN(1, 'Out', 'InA', 'tmpN', self.gnd, 2)
         self.create_transistorN(2, 'tmpN', 'InB', self.gnd, self.gnd, 2)
-        self.create_transistorP(3, 'Out', 'InA', 'Vdd', 'Vdd', 2)
-        self.create_transistorP(4, 'Out', 'InB', 'Vdd', 'Vdd', 2)
+        self.create_transistorP(3, 'Out', 'InA', 'Vdd', 'Vdd', WPFACT)
+        self.create_transistorP(4, 'Out', 'InB', 'Vdd', 'Vdd', WPFACT)
 
     """ add_instance:
             añadir una NAND al circuito
@@ -208,8 +213,8 @@ class Nor(Compuerta):
         super().__init__()
         self.create_transistorN(1, 'Out', 'InA', self.gnd, self.gnd, 1)
         self.create_transistorN(2, 'Out', 'InB', self.gnd, self.gnd, 1)
-        self.create_transistorP(3, 'Out', 'InA', 'tmpP', 'Vdd', 4)
-        self.create_transistorP(4, 'tmpP', 'InB', 'Vdd', 'Vdd', 4)
+        self.create_transistorP(3, 'Out', 'InA', 'tmpP', 'Vdd', WPFACT * 2)
+        self.create_transistorP(4, 'tmpP', 'InB', 'Vdd', 'Vdd', WPFACT * 2)
 
     """ add_instance:
             añadir un NOR al circuito
