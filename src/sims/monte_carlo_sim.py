@@ -16,7 +16,22 @@ from PySpice.Unit import *
 
 import numpy as np
 
-def do_monte_carlo_sim(tech, path, step_time):
+# tech      - La tecnologia usar
+# put       - Path Under Test (Ruta bajo prueba)
+# step_time - El escalon máximo para usar en la simulación
+# num_sims  - El número de simulaciones
+#               Falta de memoria después de ~50,000 simulaciones
+#               Normalmente encontramos el mejor antes de 5,000 simulaciones
+
+# Ejemplo:
+#   from tech   import TSMC180              as tech     # Tecnologia que queremos usar
+#   from paths  import inversor_chain_path  as path     # Path que estamos probando
+#   from sims   import monte_carlo_sim      as mcs      # El código que hace la simulación Monte Carlo
+#
+#   put = path.InversorChainPath(tech, 5)
+#   mcs.do_monte_carlo_sim(tech, put, 1e-9, 10000)
+
+def do_monte_carlo_sim(tech, put, step_time, num_sims):
     # ================================
     # Encontrar la carpeta de liberias
     # ================================
@@ -36,7 +51,7 @@ def do_monte_carlo_sim(tech, path, step_time):
     # ===========================
     # La ruta que queremos probar
     # ===========================
-    path.add_to_circuit(circuit, 'Vdd', 'In', 'Out')
+    put.add_to_circuit(circuit, 'Vdd', 'In', 'Out')
 
     # muestra el netlist
     print(str(circuit))
@@ -60,15 +75,12 @@ def do_monte_carlo_sim(tech, path, step_time):
     best_tp = 100.0
 
     # Netlist y anchos para el mejor tiempo de propagación
-    best_widths = path.get_widths()
+    best_widths = put.get_widths()
 
-    # Falta de memoria después de ~50,000 simulaciones
-    # Normalmente encontramos el mejor antes de 5,000 simulaciones
-    NUM_SIMS = 10000;
     ts = time.time();
-    for l in range(NUM_SIMS):
+    for l in range(num_sims):
         if (l % 100 == 0):
-            print("Ran " + str(l) + "/" + str(NUM_SIMS) + " (" + str((100.0 * l)/NUM_SIMS) + "%)")
+            print("Ran " + str(l) + "/" + str(num_sims) + " (" + str((100.0 * l)/num_sims) + "%)")
 
         # ======================
         # Ejecutar la simulación
@@ -104,7 +116,7 @@ def do_monte_carlo_sim(tech, path, step_time):
 
         for (v, t) in zip(analysis['out'], analysis['out'].abscissa):
             # nos interesa cuando la salida tiene un flanco ascendente o descendente?
-            if (path.inverts()):
+            if (put.inverts()):
                 if (float(v) <= (tech.VDD / 2)):
                     out_transitions = t
                     print("Out falls past 50% at " + str(out_transitions.convert_to_power(-12)))
@@ -130,7 +142,7 @@ def do_monte_carlo_sim(tech, path, step_time):
 
             if (tp < best_tp):
                 best_tp     = tp
-                best_widths = path.get_widths()
+                best_widths = put.get_widths()
 
                 # reduce simulation time to tp + 50ps
                 sim_time    = tp + 50e-12
@@ -144,15 +156,15 @@ def do_monte_carlo_sim(tech, path, step_time):
         # =====================
 
         # Usamos los mejores anchos que encontramos y cambiar uno (no el primero)
-        path.set_widths(best_widths)
-        path.change_one_width()
+        put.set_widths(best_widths)
+        put.change_one_width()
 
     # ======================
     # Mostrar los resultados
     # ======================
 
     te = time.time();
-    print("Took " + str(te - ts) + "s to run " + str(NUM_SIMS) + " simulations");
+    print("Took " + str(te - ts) + "s to run " + str(num_sims) + " simulations");
     print("Best Tp " + str(best_tp) + " Widths " + str(best_widths))
 
     # ====================================
@@ -167,7 +179,7 @@ def do_monte_carlo_sim(tech, path, step_time):
     # Finalmente simula una vez más con anchos mejores
     # Y plotear el resultado
     # ================================================
-    path.set_widths(best_widths)
+    put.set_widths(best_widths)
     simulator = circuit.simulator(temperature=27, nominal_temperature=27)
     analysis = simulator.transient(end_time=sim_time*1.5, step_time=step_time)
-    path.plot(analysis, 'In', 'Out')
+    put.plot(analysis, 'In', 'Out')
