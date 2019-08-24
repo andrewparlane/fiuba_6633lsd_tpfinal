@@ -41,7 +41,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # ====================================
     # Generar el parte general del netlist
     # ====================================
-    circuit = Circuit('Cadena de Inversores')               # titulo
+    circuit = Circuit("Monte_Carlo_Sim_"+type(put).__name__+"_"+tech.NAME)
     circuit.include(libraries_path + "/" + tech.LIB_NAME)   #.inclcude "foo.lib"
 
     vdd = circuit.V('dd', 'Vdd', circuit.gnd, tech.VDD)     # Fuente de tensión Vdd
