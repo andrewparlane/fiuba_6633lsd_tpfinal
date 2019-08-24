@@ -120,12 +120,12 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
             if (put.inverts()):
                 if (float(v) <= (tech.VDD / 2)):
                     out_transitions = t
-                    print("Out falls past 50% at " + str(out_transitions.convert_to_power(-12)))
+                    #print("Out falls past 50% at " + str(out_transitions.convert_to_power(-12)))
                     break
             else:
                 if (float(v) >= (tech.VDD / 2)):
                     out_transitions = t
-                    print("Out rises past 50% at " + str(out_transitions.convert_to_power(-12)))
+                    #print("Out rises past 50% at " + str(out_transitions.convert_to_power(-12)))
                     break
 
         # =====================
