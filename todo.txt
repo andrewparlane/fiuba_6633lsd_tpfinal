@@ -1,18 +1,20 @@
 WPFACT = 1.5
+    and how to deal with unequal rise / fall times
+    Using 1.5 for now
+    read Chapter 9 of logical effort to see if this is valid
 Do I want to do W * 2 for the nMOS in the NAND gate?
+    I think this is OK
     depends on logical effort calculations.
     How do you go from gate width to the parameters g / p / ...??
-How to do paths
-    Path class
-        contains list of gates
-        generates netlist of path
-        allows setting each dangling input
-        restrict first gate to min width?
-        Add load to output
-    Top level code
-        either path test (checks logic of given path)
-        or monte carlo sim
-            instantiates the path and then runs the simulation lots
+Code tidyup
+    Add abstract methods so that paths / gates have to have all the relevant functions?
+    auto add gates and paths to tsmc180_main.py?
+    Coding standards
+        vars_like_this? OrLikeThis?
+        english / spanish:
+            var names
+            comments
+            prints
 Build logical effort model for this tech
     See logical effort notes
 Design some paths
