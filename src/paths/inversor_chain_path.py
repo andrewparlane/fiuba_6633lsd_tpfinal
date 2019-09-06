@@ -44,8 +44,10 @@ class InversorChainPath:
             outNode = pathOutNode if i == (self.__num_inversores - 1) else ('tmp' + str(i+1))
             self.__inversores.append(self.__inv.add_instance(circuit, i, VddNode, [inNode], outNode, self.__tech.W_MIN))
 
-        # La carga
-        carga = circuit.C(1, 'Out', circuit.gnd, 500e-15)
+        # La carga - usamos un inversor de tamaño 8 veces el ancho mínimo
+        # no lo añadimos a la lista, porque no queremos cambiar los ancho más tarde
+        for i in range(8):
+            self.__inv.add_instance(circuit, self.__num_inversores + i, VddNode, ['out'], 'loadOut' + str(i), self.__tech.W_MIN)
 
     # Un flanco ascendente en la entrada da un flanco descendente en la salida?
     def inverts(self):
