@@ -15,6 +15,13 @@ from PySpice.Spice.Netlist import Circuit, SubCircuit, SubCircuitFactory
 from PySpice.Unit import *
 
 import numpy as np
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class Result:
+    tp:         float
+    widths:     List[float]
 
 # tech          - La tecnologia usar
 # put           - Path Under Test (Ruta bajo prueba)
@@ -72,11 +79,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # we reduce simulation time to best_tp + 50ps
     succesfull_run = False
 
-    # mejor tiempo de propagación
-    best_tp = 100.0
-
-    # Netlist y anchos para el mejor tiempo de propagación
-    best_widths = put.get_widths()
+    best_result = Result(100.0, put.get_widths())
 
     ts = time.time();
     for l in range(num_sims):
@@ -141,23 +144,22 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
             tp = float(out_transitions - in_rises)
             succesfull_run = True
 
-            if (tp < best_tp):
-                best_tp     = tp
-                best_widths = put.get_widths()
+            # Usamos estos anchos si el tiempo de propagación total es menor que el mejor.
+            # Nota: que pasa si el tiempo de propagación es 1fs menor que el mejor
+            #       pero la area es mucho peor?
 
-                # reduce simulation time to tp + 50ps
+            if (tp < best_result.tp):
+                best_result = Result(tp, put.get_widths())
+                # reducir la duración de la simulación a tp + 50ps
                 sim_time    = tp + 50e-12
-
-                print("New best Tp: " + str(tp) + " reducing simulation time to " + str(sim_time))
-
-            #print("Tp = " + str(tp.convert_to_power(-12)))
+                #print("New best Tp: " + str(best_result.tp) + " Widths " + str(best_result.widths) + " total widths: " + str(sum(best_result.widths)) + " reducing simulation time to " + str(sim_time))
 
         # =====================
         # Actualizar los anchos
         # =====================
 
         # Usamos los mejores anchos que encontramos y cambiar uno (no el primero)
-        widths = best_widths
+        widths = best_result.widths
 
         # Generar un ancho aleatoriamente entre tech.W_MIN y put.get_max_width()
         width = random.uniform(tech.W_MIN, put.get_max_width())
@@ -174,7 +176,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # ======================
     te = time.time();
     print("Took " + str(te - ts) + "s to run " + str(num_sims) + " simulations");
-    print("Best Tp " + str(best_tp) + " Widths " + str(best_widths))
+    print("Best Tp " + str(best_result.tp) + " Widths " + str(best_result.widths))
 
     # ====================================
     # Escribir los resultados a un archivo
@@ -182,7 +184,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     if not os.path.exists("results/"):
         os.mkdir("results/")
     f = open("results/"+type(put).__name__+"_"+tech.NAME+".txt","a+")
-    f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(best_tp) + " Widths " + str(best_widths) + "\n")
+    f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(best_result.tp) + " Widths " + str(best_result.widths) + "\n")
     f.close()
 
     # ================================================
@@ -190,7 +192,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # Y plotear el resultado
     # ================================================
     if (plot_result):
-        put.set_widths(best_widths)
+        put.set_widths(best_result.widths)
         simulator = circuit.simulator(temperature=27, nominal_temperature=27)
         analysis = simulator.transient(end_time=sim_time*1.5, step_time=step_time)
         put.plot(analysis, 'In', 'Out')
