@@ -192,7 +192,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # Finalmente simula una vez más con anchos mejores
     # Y plotear el resultado
     # ================================================
-    if (plot_result):
+    if (plot_result and (best_result.tp > 0.0) and (best_result.tp < 1.0)):
         put.set_widths(best_result.widths)
         simulator = circuit.simulator(temperature=27, nominal_temperature=27)
         analysis = simulator.transient(end_time=sim_time*1.5, step_time=step_time)
