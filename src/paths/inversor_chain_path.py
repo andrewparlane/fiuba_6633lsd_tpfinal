@@ -68,6 +68,18 @@ class InversorChainPath:
         for idx, w in enumerate(widths):
             self.__inversores[idx].parameters["w"] = w
 
+    def get_logical_effort_optimal_widths(self):
+        # logical effort dice que la esfuerza de cada etapa debería estar igual:
+        # f = gh. g = 1 por un inversor, así f = h = Cout / Cin
+        # O el ratio de los anchos debería estar igual.
+        # La carga tiene ancho 8*W_MIN, y el primer inversor tiene ancho W_MIN
+        # así f_opt = F^(1/N) = 8^(1/N)
+        f_opt = 8**(1.0/self.__num_inversores)
+        widths = [self.__tech.W_MIN]
+        for i in range(1, self.__num_inversores):
+            widths.append(widths[i-1] * f_opt)
+        return widths
+
     def plot(self, analysis, pathInNode, pathOutNode):
         figure = plt.figure(1, (10, 5))
         axe = plt.subplot(111)

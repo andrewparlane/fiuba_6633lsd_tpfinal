@@ -76,6 +76,9 @@ class NandChainPath:
         for idx, w in enumerate(widths):
             self.__gates[idx].parameters["w"] = w
 
+    def get_logical_effort_optimal_widths(self):
+        return None
+
     def plot(self, analysis, pathInNode, pathOutNode):
         figure = plt.figure(1, (10, 5))
         axe = plt.subplot(111)

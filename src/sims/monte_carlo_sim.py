@@ -188,6 +188,21 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(best_result.tp) + " Widths " + str(best_result.widths) + "\n")
     f.close()
 
+    # ==============================================
+    # Find optimal Tp as according to logical effort
+    # ==============================================
+    optWidths = put.get_logical_effort_optimal_widths()
+    if (optWidths == None):
+        print("Optimal case not supported by this path")
+    else:
+        put.set_widths(optWidths)
+        tp = _get_tp(circuit, tech, put, sim_time, step_time)
+
+        if (tp <= 0):
+            print("Optimal Case: Out never transititons")
+        else:
+            print("Optimal Case: " + str(tp) + ", widths: " + str(optWidths))
+
     # ================================================
     # Finalmente simula una vez más con anchos mejores
     # Y plotear el resultado
