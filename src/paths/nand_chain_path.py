@@ -67,22 +67,14 @@ class NandChainPath:
             widths.append(g.parameters["w"])
         return widths
 
-    # Solo deberías pasar un valor que viene de get_width(),
-    # y no cambiar los valores manualmente
+    def get_max_width(self):
+        # Usamos 20um por ahora, probablemente queremos cambiar esto más tarde
+        return 20e-6;
+
+    # todos los anchos deberían estar entre tech.W_MIN y get_max_width()
     def set_widths(self, widths):
         for idx, w in enumerate(widths):
             self.__gates[idx].parameters["w"] = w
-
-    def change_one_width(self):
-        # Generar un ancho aleatoriamente
-        # todo: deberíamos defenir el ancho máximo y el escalon en algún sitio
-        width = self.__tech.W_MIN + (random.randint(0, 2000) * 0.01e-6);
-
-        # Elegir cual ancho cambiar (no elegimos el primero)
-        idx = random.randint(1, self.__num_gates - 1)
-
-        # Hazlo
-        self.__gates[idx].parameters["w"] = width
 
     def plot(self, analysis, pathInNode, pathOutNode):
         figure = plt.figure(1, (10, 5))

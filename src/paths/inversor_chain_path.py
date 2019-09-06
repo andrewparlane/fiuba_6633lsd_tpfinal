@@ -59,22 +59,14 @@ class InversorChainPath:
             widths.append(inv.parameters["w"])
         return widths
 
-    # Solo deberías pasar un valor que viene de get_width(),
-    # y no cambiar los valores manualmente
+    def get_max_width(self):
+        # La carga es 8*tech.W_MIN, así elegimos 10*tech.W_MIN cómo máximo
+        return 10*self.__tech.W_MIN
+
+    # todos los anchos deberían estar entre tech.W_MIN y get_max_width()
     def set_widths(self, widths):
         for idx, w in enumerate(widths):
             self.__inversores[idx].parameters["w"] = w
-
-    def change_one_width(self):
-        # Generar un ancho aleatoriamente
-        # todo: deberíamos defenir el ancho máximo y el escalon en algún sitio
-        width = self.__tech.W_MIN + (random.randint(0, 2000) * 0.01e-6);
-
-        # Elegir cual ancho cambiar (no elegimos el primero)
-        idx = random.randint(1, self.__num_inversores - 1)
-
-        # Hazlo
-        self.__inversores[idx].parameters["w"] = width
 
     def plot(self, analysis, pathInNode, pathOutNode):
         figure = plt.figure(1, (10, 5))
