@@ -35,6 +35,7 @@ class InversorChainPath:
     def add_to_circuit(self, circuit, VddNode, pathInNode, pathOutNode):
         # Añadir el inversor subcircuito al netlist
         circuit.subcircuit(self.__inv)
+        self.__inversores = []
 
         # Generar la cadena de inversores
         # guardando cada inversor en __inversores

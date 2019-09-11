@@ -39,6 +39,9 @@ class NandChainPath:
         return result
 
     def add_to_circuit(self, circuit, VddNode, pathInNode, pathOutNode):
+        __gates         = []
+        __inputSources  = []
+
         # Añadir el NAND subcircuito al netlist
         circuit.subcircuit(self.__nand)
 
