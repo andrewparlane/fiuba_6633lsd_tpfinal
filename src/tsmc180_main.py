@@ -67,29 +67,33 @@ def do_pt(args):
 # Parseo de argumentos
 # ====================
 
-parser = argparse.ArgumentParser(description='Run tests / simulation using TSMC180 tech')
-subparsers = parser.add_subparsers(title='Commands', metavar='CMD', required=True)
+def main():
+    parser = argparse.ArgumentParser(description='Run tests / simulation using TSMC180 tech')
+    subparsers = parser.add_subparsers(title='Commands', metavar='CMD', required=True)
 
-parserMCS = subparsers.add_parser('MCS', help='Monte Carlo Simulation')
-parserMCS.add_argument('--step_time', metavar='TIME', type=float, default=1e-9,
-                       help='Max time step for transient simulation (default: 1e-9)')
-parserMCS.add_argument('--num_sims', type=int, default=10000,
-                       help='Number of simulation to run (default: 10000)')
-parserMCS.add_argument('-p', '--plot', dest='plot_result', action='store_true', default=False,
-                       help='Plot the results of the transient sim of the best case')
-parserMCS.add_argument('path', metavar='PATH', choices=PATHS,
-                       help='Path to simulate: (%(choices)s)')
-parserMCS.set_defaults(func=do_mcs)
+    parserMCS = subparsers.add_parser('MCS', help='Monte Carlo Simulation')
+    parserMCS.add_argument('--step_time', metavar='TIME', type=float, default=1e-9,
+                           help='Max time step for transient simulation (default: 1e-9)')
+    parserMCS.add_argument('--num_sims', type=int, default=10000,
+                           help='Number of simulation to run (default: 10000)')
+    parserMCS.add_argument('-p', '--plot', dest='plot_result', action='store_true', default=False,
+                           help='Plot the results of the transient sim of the best case')
+    parserMCS.add_argument('path', metavar='PATH', choices=PATHS,
+                           help='Path to simulate: (%(choices)s)')
+    parserMCS.set_defaults(func=do_mcs)
 
-parserGT = subparsers.add_parser('GT', help='Gate Test')
-parserGT.add_argument('gate', metavar='GATE', choices=GATES,
-                      help='Gate to test: (%(choices)s)')
-parserGT.set_defaults(func=do_gt)
+    parserGT = subparsers.add_parser('GT', help='Gate Test')
+    parserGT.add_argument('gate', metavar='GATE', choices=GATES,
+                          help='Gate to test: (%(choices)s)')
+    parserGT.set_defaults(func=do_gt)
 
-parserGT = subparsers.add_parser('PT', help='Path Test')
-parserGT.add_argument('path', metavar='PATH', choices=PATHS,
-                      help='Gate to test: (%(choices)s)')
-parserGT.set_defaults(func=do_pt)
+    parserGT = subparsers.add_parser('PT', help='Path Test')
+    parserGT.add_argument('path', metavar='PATH', choices=PATHS,
+                          help='Gate to test: (%(choices)s)')
+    parserGT.set_defaults(func=do_pt)
 
-args = parser.parse_args()
-args.func(args)
+    args = parser.parse_args()
+    args.func(args)
+
+if __name__ == '__main__':
+    main()
