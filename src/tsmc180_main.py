@@ -11,6 +11,9 @@ from sims   import monte_carlo_sim      as mcs      # El código que hace la sim
 from sims   import gate_test            as gt       # El código que hace pruebas de compuertas
 from sims   import path_test            as pt       # El código que hace pruebas de rutas
 
+def inverter_chain_3():
+    return icp.InversorChainPath(tech, 3)
+
 def inverter_chain_5():
     return icp.InversorChainPath(tech, 5)
 
@@ -27,6 +30,7 @@ def nor():
     return tech.Nor()
 
 PATHS = {
+            'inverter_chain_3'  : inverter_chain_3,
             'inverter_chain_5'  : inverter_chain_5,
             'nand_chain_5'      : nand_chain_5,
             #'FO4'               : test2
