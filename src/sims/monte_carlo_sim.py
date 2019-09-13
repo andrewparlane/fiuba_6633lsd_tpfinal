@@ -186,7 +186,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
         # =====================
 
         # Usamos los mejores anchos que encontramos y cambiar uno (no el primero)
-        widths = result.widths
+        widths = list(result.widths)    # tomar una copia
 
         # Generar un ancho aleatoriamente entre tech.W_MIN y put.get_max_width()
         width = random.uniform(tech.W_MIN, put.get_max_width())
