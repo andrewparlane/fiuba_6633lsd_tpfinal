@@ -5,9 +5,6 @@ import random
 
 import matplotlib.pyplot as plt
 
-import PySpice.Logging.Logging as Logging
-logger = Logging.setup_logging()
-
 from PySpice.Doc.ExampleTools import find_libraries
 from PySpice.Probe.Plot import plot
 from PySpice.Spice.Library import SpiceLibrary
@@ -24,7 +21,7 @@ class Result:
     widths:     List[float]
     totalWidth: float
 
-def _get_tp(circuit, tech, put, sim_time, step_time):
+def _get_tp(circuit, tech, put, sim_time, step_time, logger):
     # ======================
     # Ejecutar la simulación
     # ======================
@@ -45,7 +42,7 @@ def _get_tp(circuit, tech, put, sim_time, step_time):
     for (v,t) in zip(analysis['in'], analysis['in'].abscissa):
         if (float(v) >= (tech.VDD / 2)):
             in_rises = t
-            #print("In rises past 50% at " + str(in_rises.convert_to_power(-12)))
+            logger.debug("In rises past 50%% at %s", str(in_rises.convert_to_power(-12)))
             break
 
     # Después encontrar la trasición de la salida
@@ -54,12 +51,12 @@ def _get_tp(circuit, tech, put, sim_time, step_time):
         if (put.inverts()):
             if (float(v) <= (tech.VDD / 2)):
                 out_transitions = t
-                #print("Out falls past 50% at " + str(out_transitions.convert_to_power(-12)))
+                logger.debug("Out falls past 50%% at %s", str(out_transitions.convert_to_power(-12)))
                 break
         else:
             if (float(v) >= (tech.VDD / 2)):
                 out_transitions = t
-                #print("Out rises past 50% at " + str(out_transitions.convert_to_power(-12)))
+                logger.debug("Out rises past 50%% at %s", str(out_transitions.convert_to_power(-12)))
                 break
 
     # =====================
@@ -78,26 +75,32 @@ def _get_tp(circuit, tech, put, sim_time, step_time):
 #                   Falta de memoria después de ~50,000 simulaciones
 #                   Normalmente encontramos el mejor antes de 5,000 simulaciones
 # plot_result   - Muestra una grafica de la simulación mejor al final
+# logger        - El logger (debería estar VerboseLogger)
+#                 Los niveles usados son: WARNING, INFO, VERBOSE, DEBUG
 
 # Ejemplo:
 #   from tech   import TSMC180              as tech     # Tecnologia que queremos usar
 #   from paths  import inversor_chain_path  as path     # Path que estamos probando
 #   from sims   import monte_carlo_sim      as mcs      # El código que hace la simulación Monte Carlo
 #
+#   logger = verboselogs.VerboseLogger('MCS logger')
+#   logger.addHandler(logging.StreamHandler())
+#   logger.setLevel(logging.INFO);
+#
 #   put = path.InversorChainPath(tech, 5)
 #   mcs.do_monte_carlo_sim(tech, put, 1e-9, 10000, True)
 
-def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
+def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     # initialisar el generador alatoria usando el tiempo del sistema
     random.seed()
 
-    print("Running with step_time " + str(step_time) + ", num_sims " + str(num_sims))
+    logger.info("Running Monte Carlo simulation with path %s, tech %s, with step_time %e, num_sims %d", put.name(), tech.NAME, step_time, num_sims)
 
     # ==================
     # Generar el netlist
     # ==================
     libraries_path = find_libraries()
-    circuit = Circuit("Monte_Carlo_Sim_"+type(put).__name__+"_"+tech.NAME)
+    circuit = Circuit("Monte_Carlo_Sim_"+put.name()+"_"+tech.NAME)
     circuit.include(libraries_path + "/" + tech.LIB_NAME)   #.inclcude "foo.lib"
 
     vdd = circuit.V('dd', 'Vdd', circuit.gnd, tech.VDD)     # Fuente de tensión Vdd
@@ -134,29 +137,31 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # Y guardamos el resultado actual (tal vez no el mejor Tp, pero el mejor area y muy cerca el mejor Tp)
     result = Result(best_tp, put.get_widths(), sum(put.get_widths()))
 
-    for l in range(num_sims):
-        if (l % 100 == 0):
-            print("Ran " + str(l) + "/" + str(num_sims) + " (" + str((100.0 * l)/num_sims) + "%)")
+    for l in range(1,num_sims+1):
 
         widths = put.get_widths()
         totalWidth = sum(widths)
 
-        tp = _get_tp(circuit, tech, put, sim_time, step_time)
+        logger.debug("Running simulation with widths: %s, sim_time %e, step_time %e", str(widths), sim_time, step_time)
+
+        tp = _get_tp(circuit, tech, put, sim_time, step_time, logger)
         if (tp < 0):
             # La duración de simulación no estuvo suficiente largo
             # Si vimos una transición antes, entonces es claro que esto no puede ser mejor.
             # Pero si nunca vimos una transición antes, incrementamos la duración
             if (not succesfull_run):
                 sim_time += sim_time_step
-                print("Out never transititons, increasing simulation time to " + str(sim_time))
+                logger.verbose("Out never transititons, increasing simulation time to %e", sim_time)
+            else:
+                logger.debug("Out never transititons")
         else:
             succesfull_run = True
 
-            print("tp: " + str(tp) + ", widths: " + str(widths) + ", totalWidth: " + str(totalWidth))
+            logger.verbose("tp: %e, widths: %s, totalWidth: %e", tp, str(widths), totalWidth)
 
             # este resultado tiene menor tp que el corriente mejor?
             if (tp < best_tp):
-                print("  New Best Tp")
+                logger.verbose("  New Best Tp")
                 best_tp = tp
 
                 # reducir la duración de la simulación a tp + 50ps
@@ -168,7 +173,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
 
                 if ((result.tp > (best_tp * ((100 + TP_FLEX_PERCENT) / 100))) or
                     (result.totalWidth > totalWidth)):
-                    print("  New best result")
+                    logger.verbose("  New best result")
                     result = Result(tp, widths, totalWidth)
             else:
 
@@ -176,10 +181,8 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
                 # Y tiene mejor area, entonces usamos esto.
                 if ((tp <= (best_tp * ((100 + TP_FLEX_PERCENT) / 100))) and
                     (totalWidth < result.totalWidth)):
-                    print("  New best result")
+                    logger.verbose("  New best result")
                     result = Result(tp, widths, totalWidth)
-
-            #print("New best Tp: " + str(result.tp) + " Widths " + str(result.widths) + " total widths: " + str(sum(result.widths)) + " reducing simulation time to " + str(sim_time))
 
         # =====================
         # Actualizar los anchos
@@ -198,13 +201,16 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
         # Hazlo
         put.set_widths(widths)
 
+        if (l % 100 == 0):
+            logger.info("Ran %d / %d (%.1f%%)", l, num_sims, (100.0 * l)/num_sims)
+
     te = time.time();
 
     # ======================
     # Mostrar los resultados
     # ======================
-    print("Took " + str(te - ts) + "s to run " + str(num_sims) + " simulations");
-    print("Best Tp " + str(result.tp) + " Widths " + str(result.widths))
+    logger.info("Took %ds to run %d simulations", int(te - ts), num_sims);
+    logger.info("Best Tp %e, Widths %s", result.tp, str(result.widths))
 
     if not os.path.exists("results/"):
         os.mkdir("results/")
@@ -217,16 +223,16 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # ============================================
     optWidths = put.get_logical_effort_optimal_widths()
     if (optWidths == None):
-        print("Optimal case not supported by this path")
+        logger.warning("Optimal case not supported by this path")
     else:
-        print("Running test with optimal widths calculated via logical effort: " + str(optWidths))
+        logger.info("Running test with optimal widths calculated via logical effort: %s", str(optWidths))
         put.set_widths(optWidths)
-        tp = _get_tp(circuit, tech, put, sim_time, step_time)
+        tp = _get_tp(circuit, tech, put, sim_time, step_time, logger)
 
         if (tp <= 0):
-            print("Optimal Case: Out never transititons")
+            logger.info("Optimal Case: Out never transititons")
         else:
-            print("Optimal Case: " + str(tp) + ", widths: " + str(optWidths))
+            logger.info("Optimal Case: %e, widths: %s", tp, str(optWidths))
 
     # ================================================
     # Finalmente simula una vez más con anchos mejores

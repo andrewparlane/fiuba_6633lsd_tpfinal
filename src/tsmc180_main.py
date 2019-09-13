@@ -1,4 +1,6 @@
 import argparse
+import logging, verboselogs
+import sys
 
 from tech   import TSMC180              as tech     # Tecnologia que queremos usar
 
@@ -42,22 +44,22 @@ GATES = {
             'NOR'               : nor
         }
 
-def do_mcs(args):
+def do_mcs(args, logger):
     step_time   = args.step_time
     num_sims    = args.num_sims
     path        = args.path
     plot_result = args.plot_result
 
     put = PATHS[path]()
-    mcs.do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result)
+    mcs.do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger)
 
-def do_gt(args):
+def do_gt(args, logger):
     gate = args.gate
 
     gut = GATES[gate]()
     gt.do_gate_test(tech, gut)
 
-def do_pt(args):
+def do_pt(args, logger):
     path = args.path
 
     put = PATHS[path]()
@@ -70,6 +72,14 @@ def do_pt(args):
 def main():
     parser = argparse.ArgumentParser(description='Run tests / simulation using TSMC180 tech')
     subparsers = parser.add_subparsers(title='Commands', metavar='CMD', required=True)
+
+    verbosityGroup = parser.add_mutually_exclusive_group()
+    verbosityGroup.add_argument('-v', dest='verbose', action='store_true', default=False,
+                                help='Output debug information')
+    verbosityGroup.add_argument('-vv', dest='verbose2', action='store_true', default=False,
+                                help='Output lots of debug information')
+    verbosityGroup.add_argument('-q', dest='quiet', action='store_true', default=False,
+                                help='Output nothing')
 
     parserMCS = subparsers.add_parser('MCS', help='Monte Carlo Simulation')
     parserMCS.add_argument('--step_time', metavar='TIME', type=float, default=1e-9,
@@ -93,7 +103,21 @@ def main():
     parserGT.set_defaults(func=do_pt)
 
     args = parser.parse_args()
-    args.func(args)
+
+    logger = verboselogs.VerboseLogger('MCS logger')
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+
+    # Estos están en un grupo de exclusividad mutual
+    if (args.verbose2):
+        logger.setLevel(logging.DEBUG)
+    elif (args.verbose):
+        logger.setLevel(logging.VERBOSE);
+    elif (args.quiet):
+        logger.setLevel(logging.WARNING);
+    else:
+        logger.setLevel(logging.INFO);
+
+    args.func(args, logger)
 
 if __name__ == '__main__':
     main()

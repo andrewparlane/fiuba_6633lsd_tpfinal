@@ -2,9 +2,6 @@ import os
 
 import matplotlib.pyplot as plt
 
-import PySpice.Logging.Logging as Logging
-logger = Logging.setup_logging()
-
 from PySpice.Doc.ExampleTools import find_libraries
 from PySpice.Probe.Plot import plot
 from PySpice.Spice.Library import SpiceLibrary
