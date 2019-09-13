@@ -20,6 +20,9 @@ class InversorChainPath:
         self.__num_inversores   = num_inversores
         self.__inversores       = [];
 
+    def name(self):
+        return str("inversor_chain_" + str(self.__num_inversores))
+
     # Esto solo es para usar con pruebas de rutas
     # Si cambias esos valores un flanco en la entrada
     # tal vez no va a propogar a la salida

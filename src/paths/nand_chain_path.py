@@ -21,6 +21,9 @@ class NandChainPath:
         self.__gates            = []
         self.__inputSources     = []
 
+    def name(self):
+        return str("nand_chain_" + str(self.__num_gates))
+
     # Esto solo es para usar con pruebas de rutas
     # Si cambias esos valores un flanco en la entrada
     # tal vez no va a propogar a la salida
