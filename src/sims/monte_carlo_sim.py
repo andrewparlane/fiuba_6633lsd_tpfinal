@@ -175,7 +175,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
                 # Aunque este resultado no tiene el mejor Tp, si es adentro de 1% del mejor
                 # Y tiene mejor area, entonces usamos esto.
                 if ((tp <= (best_tp * ((100 + TP_FLEX_PERCENT) / 100))) and
-                    (totalWidth < width)):
+                    (totalWidth < result.totalWidth)):
                     print("  New best result")
                     result = Result(tp, widths, totalWidth)
 
