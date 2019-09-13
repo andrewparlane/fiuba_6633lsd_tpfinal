@@ -8,4 +8,4 @@ goto start
 
 :done
 
-python tsmc180_main.py %args% | findstr /v "warning: vin: no DC value, ..."
+python tsmc180_main.py %args% 2>&1 | findstr /v /C:"Warning: vin: no DC value"
