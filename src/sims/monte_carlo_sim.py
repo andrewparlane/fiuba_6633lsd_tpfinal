@@ -91,6 +91,8 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
     # initialisar el generador alatoria usando el tiempo del sistema
     random.seed()
 
+    print("Running with step_time " + str(step_time) + ", num_sims " + str(num_sims))
+
     # ==================
     # Generar el netlist
     # ==================
@@ -150,7 +152,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result):
         else:
             succesfull_run = True
 
-            print("tp: " + str(tp) + ", totalWidth: " + str(totalWidth))
+            print("tp: " + str(tp) + ", widths: " + str(widths) + ", totalWidth: " + str(totalWidth))
 
             # este resultado tiene menor tp que el corriente mejor?
             if (tp < best_tp):
