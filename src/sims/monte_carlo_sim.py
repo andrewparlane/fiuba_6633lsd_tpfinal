@@ -214,7 +214,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
 
     if not os.path.exists("results/"):
         os.mkdir("results/")
-    f = open("results/"+type(put).__name__+"_"+tech.NAME+".txt","a+")
+    f = open("results/"+put.name()+"_"+tech.NAME+".txt","a+")
     f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(result.tp) + " Widths " + str(result.widths) + "\n")
     f.close()
 
