@@ -188,15 +188,36 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
         # Actualizar los anchos
         # =====================
 
-        # Usamos los mejores anchos que encontramos y cambiar uno (no el primero)
+        # Usamos los mejores anchos que encontramos como base
         widths = list(result.widths)    # tomar una copia
 
+        #-------------------------------------------------------------------
+        # Método 1: Cambiar todos los ancho aleatoriamente
+        #-------------------------------------------------------------------
+        #for idx in range(1, len(widths)):
+        #    width = random.uniform(tech.W_MIN, put.get_max_width())
+        #    widths[idx] = width
+
+        #----------------------------------------------------------------
+        # Método 2: Cambiar un ancho aleatoriamente adentro todo el rango
+        #----------------------------------------------------------------
+
         # Generar un ancho aleatoriamente entre tech.W_MIN y put.get_max_width()
-        width = random.uniform(tech.W_MIN, put.get_max_width())
+        #width = random.uniform(tech.W_MIN, put.get_max_width())
 
         # Elegir cual ancho cambiar (no elegimos el primero)
-        idx = random.randint(1, len(widths)-1)
-        widths[idx] = width
+        #idx = random.randint(1, len(widths)-1)
+        #widths[idx] = width
+
+        #-------------------------------------------------------------------
+        # Método 3: Cambiar todos los ancho aleatoriamente pero solo en un
+        #           rango pequeño del valor corriente.
+        #-------------------------------------------------------------------
+        for idx in range(1, len(widths)):
+            maxDeviation = (put.get_max_width() - tech.W_MIN)/20
+            width = random.uniform(max(tech.W_MIN, widths[idx] - maxDeviation),
+                                   min(put.get_max_width(), widths[idx] + maxDeviation))
+            widths[idx] = width
 
         # Hazlo
         put.set_widths(widths)
