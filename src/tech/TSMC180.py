@@ -18,8 +18,9 @@ LD_MIN      = 0.48e-6       # Largo de difusión mínimo = 0.48 um
 
 # El tiempo de propagación promedio de un inversor con carga de otro inversor igual
 # es óptimo cuando el transistor P es 1.5 veces más grande que el transistor N.
+# Pero para tener Tphl = Tplh = Tp necesitamos WPFACT = 2.57.
 # Ver LTSpice_tests/wpfact.asc y "plot .step'ed .meas data"
-WPFACT      = 1.5
+WPFACT      = 2.57
 
 """ Compuerta:
         base para definir una subcircuito para una compuerta
