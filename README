@@ -13,6 +13,10 @@ Para installar PySpice en Linux / MAC
     comiensas con https://pyspice.fabrice-salvaire.fr/installation.html
     actualisas aquí cuando funciona.
 
+Paquetes installar
+    usamos los siguientes paquetes que puedes installar con pip:
+        verboselogs
+
 Para ejecutar:
     tsmc180_main.py es el script top level, te permite ejecutar cualquiere de los tests
         y tiene un help [-h, --help] bastante completo
