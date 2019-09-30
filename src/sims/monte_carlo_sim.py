@@ -131,7 +131,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     # if simulation times out without seeing the transition, increase sim time by ...
     sim_time_step = 100e-12
     # Once we've seen a succesfull transisition (sim time was long enough)
-    # we reduce simulation time to best_tp + 50ps
+    # we reduce simulation time to bestResult.tp + 50ps
     succesfull_run = False
 
     # Hay varios resultados con el mismo (o muy parecido) Tp
@@ -139,11 +139,11 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     # usar esto resultado cómo el mejor.
     TP_FLEX_PERCENT = 1.0
 
-    # Guardamos el mejor Tp encontrado (comenzamos con 100s, así que cualquier simulación va a mejorar)
-    best_tp = 100.0
+    # guardamos el mejor resultado
+    bestResult = Result(100.0, put.get_widths())
 
-    # Y guardamos el resultado actual (tal vez no el mejor Tp, pero el mejor area y muy cerca el mejor Tp)
-    result = Result(best_tp, put.get_widths())
+    # Y guardamos un array de todos los resultados
+    allResults = []
 
     for l in range(1,num_sims+1):
 
@@ -167,11 +167,12 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
 
             logger.verbose("tp: %e, widths: [%s], totalWidth: %e", tp, _get_widths_str(widths), totalWidth)
 
+            allResults.append(Result(tp, widths))
+
             # este resultado tiene menor tp que el corriente mejor?
-            if (tp < best_tp):
+            if (tp < bestResult.tp):
                 logger.verbose("  New Best Tp")
-                best_tp = tp
-                result = Result(tp, widths)
+                bestResult = Result(tp, widths)
 
                 # reducir la duración de la simulación a tp + 50ps
                 sim_time = tp + 50e-12
@@ -181,7 +182,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
         # =====================
 
         # Usamos los mejores anchos que encontramos como base
-        widths = list(result.widths)    # tomar una copia
+        widths = list(bestResult.widths)    # tomar una copia
 
         #-------------------------------------------------------------------
         # Método 1: Cambiar todos los ancho aleatoriamente
@@ -227,12 +228,12 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     # Mostrar los resultados
     # ======================
     logger.info("Took %ds to run %d simulations", int(te - ts), num_sims);
-    logger.info("Best Tp %e, Widths [%s]", result.tp, _get_widths_str(result.widths))
+    logger.info("Best Tp %e, Widths [%s]", bestResult.tp, _get_widths_str(bestResult.widths))
 
     if not os.path.exists("results/"):
         os.mkdir("results/")
     f = open("results/"+put.name()+"_"+tech.NAME+".txt","a+")
-    f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(result.tp) + " Widths " + _get_widths_str(result.widths) + "\n")
+    f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(bestResult.tp) + " Widths " + _get_widths_str(bestResult.widths) + "\n")
     f.close()
 
     # ============================================
@@ -255,8 +256,8 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     # Finalmente simula una vez más con anchos mejores
     # que encontramos y plotear el resultado
     # ================================================
-    if (plot_result and (result.tp > 0.0) and (result.tp < 1.0)):
-        put.set_widths(result.widths)
+    if (plot_result and (bestResult.tp > 0.0) and (bestResult.tp < 1.0)):
+        put.set_widths(bestResult.widths)
         simulator = circuit.simulator(temperature=27, nominal_temperature=27)
         analysis = simulator.transient(end_time=sim_time*1.5, step_time=step_time)
         put.plot(analysis, 'In', 'Out')
