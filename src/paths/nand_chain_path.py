@@ -7,17 +7,21 @@ import random
 class NandChainPath:
 
     __nand              = None
+    __inverter          = None
     __tech              = None
     __num_gates         = 0
     __gates             = []
+    __load              = 32.0  # La carga es un inversor de tamaño __load * tech.W_MIN
 
-    def __init__(self, tech, num_gates):
+    def __init__(self, tech, num_gates, load):
         super().__init__()
 
         # Initializar los variables del clase
         self.__tech             = tech
         self.__nand             = tech.Nand()
+        self.__inverter         = tech.Inversor()
         self.__num_gates        = num_gates
+        self.__load             = load
         self.__gates            = []
         self.__inputSources     = []
 
@@ -45,8 +49,9 @@ class NandChainPath:
         __gates         = []
         __inputSources  = []
 
-        # Añadir el NAND subcircuito al netlist
+        # Añadir el NAND y Inversor subcircuito al netlist
         circuit.subcircuit(self.__nand)
+        circuit.subcircuit(self.__inverter)
 
         # Generar la cadena de NANDs
         # guardando cada compuerta en __gates
@@ -60,8 +65,10 @@ class NandChainPath:
             self.__inputSources.append(circuit.V(inNodeB, inNodeB, circuit.gnd, self.__tech.VDD))
             self.__gates.append(self.__nand.add_instance(circuit, i, VddNode, [inNodeA, inNodeB], outNode, self.__tech.W_MIN))
 
-        # La carga
-        carga = circuit.C(1, 'Out', circuit.gnd, 500e-15)
+        # La carga - usamos un inversor de tamaño __load veces el ancho mínimo
+        # no lo añadimos a la lista, porque no queremos cambiar los ancho más tarde
+        self.__inverter.add_instance(circuit, "load", VddNode, ['out'], 'loadOut', self.__tech.W_MIN * self.__load)
+
 
     # Un flanco ascendente en la entrada da un flanco descendente en la salida?
     def inverts(self):
@@ -74,8 +81,10 @@ class NandChainPath:
         return widths
 
     def get_max_width(self):
-        # Usamos 20um por ahora, probablemente queremos cambiar esto más tarde
-        return 20e-6;
+        # La carga es un inversor de ancho __load * tech.W_MIN, así elegimos un ancho máximo
+        # de un poco más grande. Puede ser más pequeño de la carga, pero quiero darle un
+        # poco más flexibilidad
+        return 1.25 * self.__load * self.__tech.W_MIN
 
     # todos los anchos deberían estar entre tech.W_MIN y get_max_width()
     def set_widths(self, widths):
