@@ -173,26 +173,10 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
             if (tp < best_tp):
                 logger.verbose("  New Best Tp")
                 best_tp = tp
+                result = Result(tp, widths, totalWidth)
 
                 # reducir la duración de la simulación a tp + 50ps
                 sim_time = tp + 50e-12
-
-                # Tenemos un nuevo mejor Tp. Solo actualizamos el mejor resultado si tiene un Tp
-                # más lento (más de TP_FLEX_PERCENT) de este resultado. O si esta simulación también
-                # tiene mejor area que el mejor resultado.
-
-                if ((result.tp > (best_tp * ((100 + TP_FLEX_PERCENT) / 100))) or
-                    (result.totalWidth > totalWidth)):
-                    logger.verbose("  New best result")
-                    result = Result(tp, widths, totalWidth)
-            else:
-
-                # Aunque este resultado no tiene el mejor Tp, si es adentro de 1% del mejor
-                # Y tiene mejor area, entonces usamos esto.
-                if ((tp <= (best_tp * ((100 + TP_FLEX_PERCENT) / 100))) and
-                    (totalWidth < result.totalWidth)):
-                    logger.verbose("  New best result")
-                    result = Result(tp, widths, totalWidth)
 
         # =====================
         # Actualizar los anchos
