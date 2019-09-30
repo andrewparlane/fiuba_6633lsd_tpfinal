@@ -94,6 +94,9 @@ class NandChainPath:
     def get_logical_effort_optimal_widths(self):
         return None
 
+    def get_load(self):
+        return self.__load
+
     def plot(self, analysis, pathInNode, pathOutNode):
         figure = plt.figure(1, (10, 5))
         axe = plt.subplot(111)

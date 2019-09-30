@@ -87,6 +87,9 @@ class InversorChainPath:
             widths.append(widths[i-1] * f_opt)
         return widths
 
+    def get_load(self):
+        return self.__load
+
     def plot(self, analysis, pathInNode, pathOutNode):
         figure = plt.figure(1, (10, 5))
         axe = plt.subplot(111)
