@@ -203,14 +203,18 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
         #idx = random.randint(1, len(widths)-1)
         #widths[idx] = width
 
-        #-------------------------------------------------------------------
-        # Método 3: Cambiar todos los ancho aleatoriamente pero solo en un
-        #           rango pequeño del valor corriente.
-        #-------------------------------------------------------------------
+        #----------------------------------------------------------------------
+        # Método 3: Cambiar todos los ancho aleatoriamente en el rango de 0.5w
+        #           a 2w. Dónde w es el ancho actual.
+        #----------------------------------------------------------------------
         for idx in range(1, len(widths)):
-            maxDeviation = (put.get_max_width() - tech.W_MIN)/20
-            width = random.uniform(max(tech.W_MIN, widths[idx] - maxDeviation),
-                                   min(put.get_max_width(), widths[idx] + maxDeviation))
+            minWidth = max(tech.W_MIN, widths[idx]/2)
+            maxWidth = min(put.get_max_width(), widths[idx]*2)
+            width = random.uniform(minWidth, maxWidth)
+
+            logger.debug("curr_width %e, minWidth %e, maxWidth %e, new width %e",
+                          widths[idx], minWidth, maxWidth, width)
+
             widths[idx] = width
 
         # Hazlo
