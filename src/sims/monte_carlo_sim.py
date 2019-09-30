@@ -19,7 +19,6 @@ from typing import List
 class Result:
     tp:         float
     widths:     List[float]
-    totalWidth: float
 
 def _get_widths_str(widths):
     res = ""
@@ -144,7 +143,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     best_tp = 100.0
 
     # Y guardamos el resultado actual (tal vez no el mejor Tp, pero el mejor area y muy cerca el mejor Tp)
-    result = Result(best_tp, put.get_widths(), sum(put.get_widths()))
+    result = Result(best_tp, put.get_widths())
 
     for l in range(1,num_sims+1):
 
@@ -172,7 +171,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
             if (tp < best_tp):
                 logger.verbose("  New Best Tp")
                 best_tp = tp
-                result = Result(tp, widths, totalWidth)
+                result = Result(tp, widths)
 
                 # reducir la duración de la simulación a tp + 50ps
                 sim_time = tp + 50e-12
