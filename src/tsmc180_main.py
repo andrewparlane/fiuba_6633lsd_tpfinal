@@ -48,10 +48,11 @@ def do_mcs(args, logger):
     path        = args.path
     load        = args.load
     plot_result = args.plot_result
+    cvs         = args.cvs
 
     func, len = PATHS[path]
     put = func(len, load)
-    mcs.do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger)
+    mcs.do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger)
 
 def do_gt(args, logger):
     gate = args.gate
@@ -99,6 +100,8 @@ def main():
                            help='The load is an inversor of width LOAD * W_MIN')
     parserMCS.add_argument('-p', '--plot', dest='plot_result', action='store_true', default=False,
                            help='Plot the results of the transient sim of the best case')
+    parserMCS.add_argument('--cvs', metavar='FILE',
+                           help='Write results to a .cvs file on completion')
     parserMCS.add_argument('path', metavar='PATH', choices=PATHS,
                            help='Path to simulate: (%(choices)s)')
     parserMCS.set_defaults(func=do_mcs)

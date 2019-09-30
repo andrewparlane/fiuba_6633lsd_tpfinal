@@ -83,6 +83,7 @@ def _get_tp(circuit, tech, put, sim_time, step_time, logger):
 #                   Falta de memoria después de ~50,000 simulaciones
 #                   Normalmente encontramos el mejor antes de 5,000 simulaciones
 # plot_result   - Muestra una grafica de la simulación mejor al final
+# cvs           - Escribir los resultados a este archivo en formato .cvs (None si no quieres)
 # logger        - El logger (debería estar VerboseLogger)
 #                 Los niveles usados son: WARNING, INFO, VERBOSE, DEBUG
 
@@ -96,11 +97,20 @@ def _get_tp(circuit, tech, put, sim_time, step_time, logger):
 #   logger.setLevel(logging.INFO);
 #
 #   put = path.InversorChainPath(tech, 5)
-#   mcs.do_monte_carlo_sim(tech, put, 1e-9, 10000, True)
+#   mcs.do_monte_carlo_sim(tech, put, 1e-9, 10000, None, True)
 
-def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
+def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger):
     # initialisar el generador alatoria usando el tiempo del sistema
     random.seed()
+
+    # Abrir el archivo de .cvs
+    if (cvs != None):
+        try:
+            cvs_handle = open(cvs,"w+")
+        except:
+            logger.error("Failed to open %s for writing, aborting", cvs)
+            return
+
 
     logger.info("Running Monte Carlo simulation with path %s, tech %s, with step_time %e, num_sims %d", put.name(), tech.NAME, step_time, num_sims)
 
@@ -230,12 +240,6 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     logger.info("Took %ds to run %d simulations", int(te - ts), num_sims);
     logger.info("Best Tp %e, Widths [%s]", bestResult.tp, _get_widths_str(bestResult.widths))
 
-    if not os.path.exists("results/"):
-        os.mkdir("results/")
-    f = open("results/"+put.name()+"_"+tech.NAME+".txt","a+")
-    f.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + ": Step time " + str(step_time) + " Num sims " + str(num_sims) + " Best Tp " + str(bestResult.tp) + " Widths " + _get_widths_str(bestResult.widths) + "\n")
-    f.close()
-
     # ============================================
     # Encontrar el Tp optimo usando logical effort
     # ============================================
@@ -251,6 +255,65 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
             logger.info("Optimal Case: Out never transititons")
         else:
             logger.info("Optimal Case: %e, widths: [%s]", LEtp, _get_widths_str(LEwidths))
+
+    # ================================================
+    # Escribir los resultados al .cvs
+    # ================================================
+    if (cvs != None):
+        # Comenzamos con un comentario
+        cvs_handle.write("#%s: Step time %.1e, Num sims %d, path: %s, tech: %s, load: %.2f\n" %
+                         (datetime.now().strftime("%Y/%m/%d %H:%M:%S"), step_time,
+                          num_sims, put.name(), tech.NAME, put.get_load()))
+
+        # La simulación de LE (comentario)
+        if (LEwidths == None):
+            cvs_handle.write("#Logical Effort not supported by this path\n")
+        elif (LEtp <= 0):
+            cvs_handle.write("#Logical Effort: out never transititons\n")
+        else:
+            cvs_handle.write("#Logical Effort: %e, widths: [%s]\n" %
+                             (LEtp, _get_widths_str(LEwidths)))
+
+        # El titulo de los columnos:
+        widthHeadings = ""
+        for i in range(len(widths)):
+            widthHeadings += "width[%d], " % i
+
+        ratioHeadings = ""
+        for i in range(len(widths) - 1):
+            ratioHeadings += "ratio %d to %d, " % (i, i+1)
+        ratioHeadings += "ratio %d to load, " % (i+1)
+
+        cvs_handle.write("Tp, " + widthHeadings + "load width, Total width, " + ratioHeadings + "Average ratio (not including load), Average ratio (including load)\n")
+
+        # Y los resultados
+        for r in allResults:
+
+            ratios = []
+            for i in range(len(r.widths) - 1):
+                ratios.append(r.widths[i+1] / r.widths[i])
+
+            avgWithoutLoad = sum(ratios)/len(ratios)
+
+            ratios.append(put.get_load() * tech.W_MIN / r.widths[i+1])
+            avgWithLoad = sum(ratios)/len(ratios)
+
+            ratiosStr = ""
+            for i, ratio in enumerate(ratios):
+                if (i != 0):
+                    ratiosStr += ", "
+                ratiosStr += "%.2f" % ratio
+
+            cvs_handle.write("%e, %s, %e, %e, %s, %.2f, %.2f\n" %
+                             (r.tp,
+                              _get_widths_str(r.widths),
+                              put.get_load() * tech.W_MIN,
+                              sum(r.widths),
+                              ratiosStr,
+                              avgWithoutLoad,
+                              avgWithLoad))
+
+        cvs_handle.close()
 
     # ================================================
     # Finalmente simula una vez más con anchos mejores
