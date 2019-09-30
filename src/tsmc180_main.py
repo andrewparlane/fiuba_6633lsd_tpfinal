@@ -13,14 +13,11 @@ from sims   import monte_carlo_sim      as mcs      # El código que hace la sim
 from sims   import gate_test            as gt       # El código que hace pruebas de compuertas
 from sims   import path_test            as pt       # El código que hace pruebas de rutas
 
-def inverter_chain_3(load):
-    return icp.InversorChainPath(tech, 3, load)
+def inverter_chain(len, load):
+    return icp.InversorChainPath(tech, len, load)
 
-def inverter_chain_5(load):
-    return icp.InversorChainPath(tech, 5, load)
-
-def nand_chain_5(load):
-    return ncp.NandChainPath(tech, 5, load)
+def nand_chain(len, load):
+    return ncp.NandChainPath(tech, len, load)
 
 def inverter():
     return tech.Inversor()
@@ -32,10 +29,11 @@ def nor():
     return tech.Nor()
 
 PATHS = {
-            'inverter_chain_3'  : inverter_chain_3,
-            'inverter_chain_5'  : inverter_chain_5,
-            'nand_chain_5'      : nand_chain_5,
-            #'FO4'               : test2
+            'inverter_chain_3'  : (inverter_chain, 3),
+            'inverter_chain_4'  : (inverter_chain, 4),
+            'inverter_chain_5'  : (inverter_chain, 5),
+            'inverter_chain_6'  : (inverter_chain, 6),
+            'nand_chain_5'      : (nand_chain,     5)
         }
 
 GATES = {
@@ -51,7 +49,8 @@ def do_mcs(args, logger):
     load        = args.load
     plot_result = args.plot_result
 
-    put = PATHS[path](load)
+    func, len = PATHS[path]
+    put = func(len, load)
     mcs.do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger)
 
 def do_gt(args, logger):
@@ -64,7 +63,8 @@ def do_pt(args, logger):
     path = args.path
     load = args.load
 
-    put = PATHS[path](load)
+    func, len = PATHS[path]
+    put = func(len, load)
     pt.do_path_test(tech, put)
 
 # ====================
