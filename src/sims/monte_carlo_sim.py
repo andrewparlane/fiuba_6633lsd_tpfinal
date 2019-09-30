@@ -22,12 +22,11 @@ class Result:
     totalWidth: float
 
 def _get_widths_str(widths):
-    res = "["
+    res = ""
     for i, w in enumerate(widths):
         if (i != 0):
             res += ", "
         res += "%.2fe-6" % (w*1e6)
-    res += "]"
 
     return res
 
@@ -152,7 +151,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
         widths = put.get_widths()
         totalWidth = sum(widths)
 
-        logger.debug("Running simulation with widths: %s, sim_time %e, step_time %e", _get_widths_str(widths), sim_time, step_time)
+        logger.debug("Running simulation with widths: [%s], sim_time %e, step_time %e", _get_widths_str(widths), sim_time, step_time)
 
         tp = _get_tp(circuit, tech, put, sim_time, step_time, logger)
         if (tp < 0):
@@ -167,7 +166,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
         else:
             succesfull_run = True
 
-            logger.verbose("tp: %e, widths: %s, totalWidth: %e", tp, _get_widths_str(widths), totalWidth)
+            logger.verbose("tp: %e, widths: [%s], totalWidth: %e", tp, _get_widths_str(widths), totalWidth)
 
             # este resultado tiene menor tp que el corriente mejor?
             if (tp < best_tp):
@@ -229,7 +228,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     # Mostrar los resultados
     # ======================
     logger.info("Took %ds to run %d simulations", int(te - ts), num_sims);
-    logger.info("Best Tp %e, Widths %s", result.tp, _get_widths_str(result.widths))
+    logger.info("Best Tp %e, Widths [%s]", result.tp, _get_widths_str(result.widths))
 
     if not os.path.exists("results/"):
         os.mkdir("results/")
@@ -244,14 +243,14 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     if (optWidths == None):
         logger.warning("Optimal case not supported by this path")
     else:
-        logger.info("Running test with optimal widths calculated via logical effort: %s", _get_widths_str(optWidths))
+        logger.info("Running test with optimal widths calculated via logical effort: [%s]", _get_widths_str(optWidths))
         put.set_widths(optWidths)
-        tp = _get_tp(circuit, tech, put, sim_time, step_time, logger)
+        LEtp = _get_tp(circuit, tech, put, sim_time, step_time, logger)
 
         if (tp <= 0):
             logger.info("Optimal Case: Out never transititons")
         else:
-            logger.info("Optimal Case: %e, widths: %s", tp, _get_widths_str(optWidths))
+            logger.info("Optimal Case: %e, widths: [%s]", tp, _get_widths_str(optWidths))
 
     # ================================================
     # Finalmente simula una vez más con anchos mejores
