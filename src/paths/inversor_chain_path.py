@@ -10,8 +10,9 @@ class InversorChainPath:
     __tech              = None
     __num_inversores    = 0
     __inversores        = []
+    __load              = 32.0  # La carga es un inversor de tamaño __load * tech.W_MIN
 
-    def __init__(self, tech, num_inversores):
+    def __init__(self, tech, num_inversores, load):
         super().__init__()
 
         # Initializar los variables del clase
@@ -19,6 +20,7 @@ class InversorChainPath:
         self.__inv              = tech.Inversor()
         self.__num_inversores   = num_inversores
         self.__inversores       = [];
+        self.__load             = load
 
     def name(self):
         return str("inversor_chain_" + str(self.__num_inversores))
@@ -48,12 +50,9 @@ class InversorChainPath:
             outNode = pathOutNode if i == (self.__num_inversores - 1) else ('tmp' + str(i+1))
             self.__inversores.append(self.__inv.add_instance(circuit, i, VddNode, [inNode], outNode, self.__tech.W_MIN))
 
-        # La carga - usamos un inversor de tamaño 8 veces el ancho mínimo
+        # La carga - usamos un inversor de tamaño __load veces el ancho mínimo
         # no lo añadimos a la lista, porque no queremos cambiar los ancho más tarde
-        #for i in range(8):
-        #    self.__inv.add_instance(circuit, self.__num_inversores + i, VddNode, ['out'], 'loadOut' + str(i), self.__tech.W_MIN)
-
-        self.__inv.add_instance(circuit, "load", VddNode, ['out'], 'loadOut', self.__tech.W_MIN * 32)
+        self.__inv.add_instance(circuit, "load", VddNode, ['out'], 'loadOut', self.__tech.W_MIN * self.__load)
 
     # Un flanco ascendente en la entrada da un flanco descendente en la salida?
     def inverts(self):
@@ -66,8 +65,10 @@ class InversorChainPath:
         return widths
 
     def get_max_width(self):
-        # La carga es 8*tech.W_MIN, así elegimos 10*tech.W_MIN cómo máximo
-        return 40*self.__tech.W_MIN
+        # La carga es __load*tech.W_MIN, así elegimos un ancho máximo de un poco más grande.
+        # Puede ser más pequeño de la carga, pero quiero darle un poco más flexibilidad
+        #
+        return 1.25 * self.__load * self.__tech.W_MIN
 
     # todos los anchos deberían estar entre tech.W_MIN y get_max_width()
     def set_widths(self, widths):
@@ -78,9 +79,9 @@ class InversorChainPath:
         # logical effort dice que la esfuerza de cada etapa debería estar igual:
         # f = gh. g = 1 por un inversor, así f = h = Cout / Cin
         # O el ratio de los anchos debería estar igual.
-        # La carga tiene ancho 32*W_MIN, y el primer inversor tiene ancho W_MIN
-        # así f_opt = F^(1/N) = 32^(1/N)
-        f_opt = 32.0**(1.0/self.__num_inversores)
+        # La carga tiene ancho __load*W_MIN, y el primer inversor tiene ancho W_MIN
+        # así f_opt = F^(1/N) = __load^(1/N)
+        f_opt = self.__load ** (1.0/self.__num_inversores)
         widths = [self.__tech.W_MIN]
         for i in range(1, self.__num_inversores):
             widths.append(widths[i-1] * f_opt)

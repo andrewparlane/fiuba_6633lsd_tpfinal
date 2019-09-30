@@ -13,14 +13,14 @@ from sims   import monte_carlo_sim      as mcs      # El código que hace la sim
 from sims   import gate_test            as gt       # El código que hace pruebas de compuertas
 from sims   import path_test            as pt       # El código que hace pruebas de rutas
 
-def inverter_chain_3():
-    return icp.InversorChainPath(tech, 3)
+def inverter_chain_3(load):
+    return icp.InversorChainPath(tech, 3, load)
 
-def inverter_chain_5():
-    return icp.InversorChainPath(tech, 5)
+def inverter_chain_5(load):
+    return icp.InversorChainPath(tech, 5, load)
 
-def nand_chain_5():
-    return ncp.NandChainPath(tech, 5)
+def nand_chain_5(load):
+    return ncp.NandChainPath(tech, 5, load)
 
 def inverter():
     return tech.Inversor()
@@ -48,9 +48,10 @@ def do_mcs(args, logger):
     step_time   = args.step_time
     num_sims    = args.num_sims
     path        = args.path
+    load        = args.load
     plot_result = args.plot_result
 
-    put = PATHS[path]()
+    put = PATHS[path](load)
     mcs.do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger)
 
 def do_gt(args, logger):
@@ -61,13 +62,21 @@ def do_gt(args, logger):
 
 def do_pt(args, logger):
     path = args.path
+    load = args.load
 
-    put = PATHS[path]()
+    put = PATHS[path](load)
     pt.do_path_test(tech, put)
 
 # ====================
 # Parseo de argumentos
 # ====================
+
+def load_type(load):
+    load = float(load)
+    if load < 1.0:
+        raise argparse.ArgumentTypeError("Minimum load is 1.0")
+    return load
+
 
 def main():
     parser = argparse.ArgumentParser(description='Run tests / simulation using TSMC180 tech')
@@ -86,6 +95,8 @@ def main():
                            help='Max time step for transient simulation (default: 1e-13)')
     parserMCS.add_argument('--num_sims', type=int, default=10000,
                            help='Number of simulation to run (default: 10000)')
+    parserMCS.add_argument('--load', metavar='LOAD', type=load_type, required=True,
+                           help='The load is an inversor of width LOAD * W_MIN')
     parserMCS.add_argument('-p', '--plot', dest='plot_result', action='store_true', default=False,
                            help='Plot the results of the transient sim of the best case')
     parserMCS.add_argument('path', metavar='PATH', choices=PATHS,
@@ -97,10 +108,13 @@ def main():
                           help='Gate to test: (%(choices)s)')
     parserGT.set_defaults(func=do_gt)
 
-    parserGT = subparsers.add_parser('PT', help='Path Test')
-    parserGT.add_argument('path', metavar='PATH', choices=PATHS,
+    parserPT = subparsers.add_parser('PT', help='Path Test')
+    parserPT.add_argument('path', metavar='PATH', choices=PATHS,
                           help='Gate to test: (%(choices)s)')
-    parserGT.set_defaults(func=do_pt)
+    # load doesn't matter, but do need a value to instantiate the path
+    parserPT.add_argument('--load', metavar='LOAD', type=load_type, required=False,
+                           default=1.0, help=argparse.SUPPRESS)
+    parserPT.set_defaults(func=do_pt)
 
     args = parser.parse_args()
 
