@@ -82,8 +82,8 @@ def main():
                                 help='Output nothing')
 
     parserMCS = subparsers.add_parser('MCS', help='Monte Carlo Simulation')
-    parserMCS.add_argument('--step_time', metavar='TIME', type=float, default=1e-9,
-                           help='Max time step for transient simulation (default: 1e-9)')
+    parserMCS.add_argument('--step_time', metavar='TIME', type=float, default=1e-13,
+                           help='Max time step for transient simulation (default: 1e-13)')
     parserMCS.add_argument('--num_sims', type=int, default=10000,
                            help='Number of simulation to run (default: 10000)')
     parserMCS.add_argument('-p', '--plot', dest='plot_result', action='store_true', default=False,
