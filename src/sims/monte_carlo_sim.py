@@ -239,18 +239,18 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, logger):
     # ============================================
     # Encontrar el Tp optimo usando logical effort
     # ============================================
-    optWidths = put.get_logical_effort_optimal_widths()
-    if (optWidths == None):
+    LEwidths= put.get_logical_effort_optimal_widths()
+    if (LEwidths == None):
         logger.warning("Optimal case not supported by this path")
     else:
-        logger.info("Running test with optimal widths calculated via logical effort: [%s]", _get_widths_str(optWidths))
-        put.set_widths(optWidths)
+        logger.info("Running test with optimal widths calculated via logical effort: [%s]", _get_widths_str(LEwidths))
+        put.set_widths(LEwidths)
         LEtp = _get_tp(circuit, tech, put, sim_time, step_time, logger)
 
-        if (tp <= 0):
+        if (LEtp <= 0):
             logger.info("Optimal Case: Out never transititons")
         else:
-            logger.info("Optimal Case: %e, widths: [%s]", tp, _get_widths_str(optWidths))
+            logger.info("Optimal Case: %e, widths: [%s]", LEtp, _get_widths_str(LEwidths))
 
     # ================================================
     # Finalmente simula una vez más con anchos mejores
