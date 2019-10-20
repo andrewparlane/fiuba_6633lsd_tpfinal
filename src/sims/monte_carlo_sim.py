@@ -46,7 +46,7 @@ def _get_tp(circuit, tech, put, sim_time, step_time, logger):
     # podríamos iterar por los dos arrays al mismo tiempo
     # v es la tensión del nodo in y t es el tiempo de la muestra
 
-    # Prhimero encontrar la transición de la entrada
+    # Primero encontrar la transición de la entrada
     for (v,t) in zip(analysis['in'], analysis['in'].abscissa):
         if (float(v) >= (tech.VDD / 2)):
             in_rises = t
@@ -179,7 +179,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger)
 
             allResults.append(Result(tp, widths))
 
-            # este resultado tiene menor tp que el corriente mejor?
+            # este resultado tiene menor tp que el actual mejor?
             if (tp < bestResult.tp):
                 logger.verbose("  New Best Tp")
                 bestResult = Result(tp, widths)
