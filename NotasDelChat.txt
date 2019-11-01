@@ -1,0 +1,71 @@
+notes for chat with fernando:
+    Tphl = Tplh = Tp gives better results (WPFACT = 2.57)
+    Increasing width of load helped too.
+    LTSpice sim showing width vs capacitance is linear
+        shows that wout/win is a decent substitute for cout/cin
+        so increasing the load should be fine.
+    LTSpice LE test shows 1.86 is the magic ratio
+    PySpice should only be used with step time 1e-13 for actual tests
+        seen quite variable results for 1e-9
+        1e-13 also gives much less results with the same best Tp
+        this means we don't have to filter by best total width, although that is still a useful metric
+    methods for finding best result:
+        1 - all random - doesn't give good results
+            after 15k sims, only had 179 sims with the output changing in time
+            Did find 309ps for widths: widths: 0.42e-6, 1.10e-6, 1.78e-6, 3.39e-6, 5.69e-6
+                not bad, but my other sims are producing results around 306ps
+        2 - change just one randomly - seems to get stuck with stuff like
+            0.42e-6, 0.42e-6, 0.42e-6, 0.54e-6, 0.71e-6
+            although that was for a smaller load (8*W_MIN)
+            maybe try again with larger load?
+        3 - change all but only within a fixed range (was using full_range/20, in either direction)
+            seems OK, but I don't think using a deviation of 0.82u is the same for an inversor of
+            size 0.42u as it is for one of size 5u
+        4 - change all but only within a certain percentage of current width
+            so an inversor of width w can go from w-(w*X%) to w+(w*X%).
+            currently using this method with X = 100%.
+            The problem with this is that w - (w*100%) = 0 so the allowable range is 0 - 2w
+            Maybe should do sometihng like 0.5w to 2w, so it can half or double? (method 5?)
+    Ran tests yesterday:
+        Ran a sim using LE values (widths 1, 2, 4, 8, 16) *W_MIN, for load 32 *W_MIN
+        LTSpice suggests that the ratio 1.86 gives the best results, so I ran a sim in Pyspice for those widths too
+        1 run of 25k sims using method 3
+        2 runs of 10k using method 4
+        performed some analysis on the results
+            all of the top X Tps, have average ratio of ~1.86.
+            If I add the ratio of the last inversor to the load, then they have average ratio of ~2.0.
+            This means the ratio of the last inversor to the load is much larger than the others
+            some examples:
+                ratio of 1 to 2     2 to 3      3 to 4      4 to 5      5 to load
+                1.95	            1.73	    1.63	    2.03	    2.85
+                1.95	            1.61	    1.68	    2.08	    2.91
+                1.71	            1.83	    1.76	    2.03	    2.85
+                1.95	            1.73	    1.63	    1.99	    2.91
+                1.95	            1.73	    1.77	    1.87	    2.85
+
+        sumarry of results:
+            LE values (each stage 2* previous): 308.7ps
+            each stage 1.86* previous:          306.4ps
+            method 3:                           306.1ps
+                ratios: 1.95, 1.73, 1.63, 2.03, 2.85
+                avg (without load): 1.84
+                avg (with load):    2.04
+            method 4:                           306.0ps (best i've seen)
+                ratios: 1.88, 1.81, 1.73, 2.01, 2.70
+                avg (without load): 1.86
+                avg (wit load):     2.03
+    Currently running 5* 25k tests with method 4.
+        expecting results soon
+    Stuff to do:
+        analyse data from latest runs
+        questions:
+            1) LE says best is if each stage has the same effort, ie. ratios: 2, 2, 2, 2, 2
+               LTSpice says that if all ratios have to be the same (except to the load)
+               then the best option is: 1.86, 1.86, 1.86, 1.86, 2.67 (average 2.02)
+               (306.4ps vs 308.7ps, quite significant)
+               Why is this the case?
+            2) PySpice simulations say you can get ever so slightly better than this (306.0ps vs 306.4ps)
+               so presumably having each stage with the same effort is not optimal, although it's very close
+               except for the last stage (to the load).
+            3) Can we draw any conclusions from this and write it up?
+               I would quite like to finish now.

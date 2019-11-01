@@ -152,8 +152,8 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger)
     # guardamos el mejor resultado
     bestResult = Result(100.0, put.get_widths())
 
-    # Y guardamos un array de todos los resultados
-    allResults = []
+    # Y guardamos un map todos los resultados, esto servira para el ordenamiento en base a el tiempo de propagación
+    allResults = {}
 
     for l in range(1,num_sims+1):
 
@@ -177,7 +177,8 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger)
 
             logger.verbose("tp: %e, widths: [%s], totalWidth: %e", tp, _get_widths_str(widths), totalWidth)
 
-            allResults.append(Result(tp, widths))
+            allResults[tp] = widths
+            # allResults.append(Result(tp, widths))
 
             # este resultado tiene menor tp que el actual mejor?
             if (tp < bestResult.tp):
@@ -287,15 +288,15 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger)
         cvs_handle.write("Tp, " + widthHeadings + "load width, Total width, " + ratioHeadings + "Average ratio (not including load), Average ratio (including load)\n")
 
         # Y los resultados
-        for r in allResults:
+        for tp, widths in allResults.items():
 
             ratios = []
-            for i in range(len(r.widths) - 1):
-                ratios.append(r.widths[i+1] / r.widths[i])
+            for i in range(len(widths) - 1):
+                ratios.append(widths[i+1] / widths[i])
 
             avgWithoutLoad = sum(ratios)/len(ratios)
 
-            ratios.append(put.get_load() * tech.W_MIN / r.widths[i+1])
+            ratios.append(put.get_load() * tech.W_MIN / widths[i+1])
             avgWithLoad = sum(ratios)/len(ratios)
 
             ratiosStr = ""
@@ -305,10 +306,10 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger)
                 ratiosStr += "%.2f" % ratio
 
             cvs_handle.write("%e, %s, %e, %e, %s, %.2f, %.2f\n" %
-                             (r.tp,
-                              _get_widths_str(r.widths),
+                             (tp,
+                              _get_widths_str(widths),
                               put.get_load() * tech.W_MIN,
-                              sum(r.widths),
+                              sum(widths),
                               ratiosStr,
                               avgWithoutLoad,
                               avgWithLoad))
