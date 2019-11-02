@@ -1,3 +1,6 @@
+
+Modo de ejecucion : python tsmc180_main.py MCS inverter_chain_5 --num_sims=25000 --load=32.0 --cvs=inverter_chain_5_32.cvs
+
 notes for chat with fernando:
     Tphl = Tplh = Tp gives better results (WPFACT = 2.57)
     Increasing width of load helped too.

@@ -288,7 +288,7 @@ def do_monte_carlo_sim(tech, put, step_time, num_sims, plot_result, cvs, logger)
         cvs_handle.write("Tp, " + widthHeadings + "load width, Total width, " + ratioHeadings + "Average ratio (not including load), Average ratio (including load)\n")
 
         # Y los resultados
-        for tp, widths in allResults.items():
+        for tp, widths in sorted(allResults.items()):
 
             ratios = []
             for i in range(len(widths) - 1):
